@@ -65,6 +65,7 @@ class LdapSetting
 
   safe_attributes *(LDAP_ATTRIBUTES + CLASS_NAMES + FLAGS + COMBOS + OTHERS)
   define_attribute_methods LDAP_ATTRIBUTES + CLASS_NAMES + FLAGS + COMBOS + OTHERS
+  ::User::STANDARD_FIELDS = %w( firstname lastname mail )
 
   [:login, *User::STANDARD_FIELDS].each {|f| module_eval("def #{f}; auth_source_ldap.attr_#{f}; end") }
 
@@ -375,7 +376,9 @@ class LdapSetting
     end
 
     def self.settings(source)
-      Setting.plugin_redmine_ldap_sync.fetch(source.id, HashWithIndifferentAccess.new)
+      ActionController::Parameters.new(
+        Setting.plugin_redmine_ldap_sync.fetch(source.id, HashWithIndifferentAccess.new)
+      ).permit!.to_h.with_indifferent_access
     end
 
     def settings
