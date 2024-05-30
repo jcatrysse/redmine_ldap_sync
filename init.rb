@@ -20,4 +20,4 @@ Rails.application.config.to_prepare do
 end
 
 # hooks
-require_dependency 'ldap_sync/hooks'
+require File.dirname(__FILE__) + '/lib/ldap_sync/hooks'
