@@ -14,10 +14,13 @@ Redmine::Plugin.register :redmine_ldap_sync do
                     :html => {:class => 'icon icon-ldap-sync'}
 end
 
-Rails.application.config.to_prepare do
-  require File.dirname(__FILE__) + '/lib/ldap_sync/core_ext'
-  require File.dirname(__FILE__) + '/lib/ldap_sync/infectors'
+
+Rails.application.config.after_initialize do
+  require_relative 'lib/ldap_sync/core_ext'
+  require_relative 'lib/ldap_sync/infectors'
 end
 
 # hooks
-require File.dirname(__FILE__) + '/lib/ldap_sync/hooks'
+require_relative 'lib/ldap_sync/hooks'
+
+require 'sorted_set'
