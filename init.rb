@@ -15,8 +15,8 @@ Redmine::Plugin.register :redmine_ldap_sync do
 end
 
 Rails.application.config.to_prepare do
-  require_dependency 'ldap_sync/core_ext'
-  require_dependency 'ldap_sync/infectors'
+  require File.dirname(__FILE__) + '/lib/ldap_sync/core_ext'
+  require File.dirname(__FILE__) + '/lib/ldap_sync/infectors'
 end
 
 # hooks
