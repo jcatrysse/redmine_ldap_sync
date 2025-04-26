@@ -16,7 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with Redmine LDAP Sync.  If not, see <http://www.gnu.org/licenses/>.
  */
-$(function() {
+$(document).ready(function () {
   "use strict";
 
   function show_options(elem, ambit) {
@@ -25,74 +25,99 @@ $(function() {
 
     $(prefix).hide();
 
-    // Remove required for hidden elements
+    // Remove "required" for hidden elements
     $(prefix + ' input').removeAttr('required');
 
-    if (selected !== '') {
+    if (selected) {
       $(prefix + '.' + selected).show();
-      
-      // Add required for visible and required inputs
-      $(prefix + '.' + selected + ' input').each(function(){
 
-        if($('label[for="' + this.id + '"]').hasClass('required'))
+      // Add "required" for visible inputs
+      $(prefix + '.' + selected + ' input').each(function () {
+        if ($('label[for="' + this.id + '"]').hasClass('required')) {
           $(this).attr('required', 'required');
-
+        }
       });
     }
   }
 
   function show_dyngroups_ttl(elem) {
-    if ($(elem).val() == 'enabled_with_ttl')
+    if ($(elem).val() === 'enabled_with_ttl') {
       $('#dyngroups-cache-ttl').show();
-    else
+    } else {
       $('#dyngroups-cache-ttl').hide();
+    }
   }
 
+  // Initialize options on page load
   show_options($('#ldap_setting_group_membership'), 'membership');
-  $('#ldap_setting_group_membership')
-    .bind('change keyup', function() { show_options(this, 'membership'); });
-
   show_options($('#ldap_setting_nested_groups'), 'nested');
-  $('#ldap_setting_nested_groups')
-    .bind('change keyup', function() { show_options(this, 'nested'); });
+  show_dyngroups_ttl($('#ldap_setting_dyngroups'));
 
-  $('#base_settings').bind('change keyup', function() {
+  // Event bindings using .on()
+  $('#ldap_setting_group_membership').on('change keyup', function () {
+    show_options(this, 'membership');
+  });
+
+  $('#ldap_setting_nested_groups').on('change keyup', function () {
+    show_options(this, 'nested');
+  });
+
+  $('#base_settings').on('change keyup', function () {
     var id = $(this).val();
     if (!base_settings[id]) return;
 
     var hash = base_settings[id];
-    for (var k in hash) if (hash.hasOwnProperty(k)) {
-      if (k === 'name' || hash[k] === $('#ldap_setting_' + k).val()) continue;
-
-      $('#ldap_setting_' + k).val(hash[k]).change()
-        .effect('highlight', {easing: 'easeInExpo'}, 500);
-    }
+    Object.entries(hash).forEach(([key, value]) => {
+      if (key !== 'name' && value !== $('#ldap_setting_' + key).val()) {
+        $('#ldap_setting_' + key)
+            .val(value)
+            .change()
+            .effect('highlight', { easing: 'easeInExpo' }, 500);
+      }
+    });
   });
 
-  show_dyngroups_ttl($('#ldap_setting_dyngroups'));
-  $('#ldap_setting_dyngroups')
-    .bind('change keyup', function() { show_dyngroups_ttl(this); });
+  $('#ldap_setting_dyngroups').on('change keyup', function () {
+    show_dyngroups_ttl(this);
+  });
 
-  $('input[name^="ldap_test"]').keydown(function (e) {
-    if (e.which == 13) {
+  // Handle "Enter" key for ldap_test inputs
+  $('input[name^="ldap_test"]').on('keydown', function (e) {
+    if (e.which === 13) {
       $('#commit-test').click();
       e.preventDefault();
     }
   });
 
-  $('form[id^="edit_ldap_setting"]').submit(function() {
+  // Append the current tab on form submit
+  $('form[id^="edit_ldap_setting"]').on('submit', function () {
     var current_tab = $('a[id^="tab-"].selected').attr('id').substring(4);
-    $('form[id^="edit_ldap_setting"]').append(
-      '<input type="hidden" name="tab" value="' + current_tab + '">'
+    $(this).append(
+        $('<input>')
+            .attr('type', 'hidden')
+            .attr('name', 'tab')
+            .val(current_tab)
     );
   });
 
+  // AJAX events for "commit-test"
   $('#commit-test')
-    .bind('ajax:before', function() {
-      var data = $('form[id^="edit_ldap_setting"]').serialize();
-      $(this).data('params', data);
-    })
-    .bind('ajax:success', function(event, data) {
-      $('#test-result').text(data);
-    });
+      .on('click', function (e) {
+        e.preventDefault();
+        var formData = $('form[id^="edit_ldap_setting"]').serialize();
+        var url = $(this).attr('href') || $(this).data('url');
+
+        $.ajax({
+          url: url,
+          method: 'PUT',
+          data: formData,
+          success: function (response) {
+            $('#test-result').text(response);
+          },
+          error: function (xhr, status, error) {
+            console.error('AJAX Error:', error);
+            $('#test-result').text('Er is een fout opgetreden.');
+          },
+        });
+      });
 });
