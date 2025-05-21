@@ -37,7 +37,7 @@
 
 <% end -%>
 <% if @test.user_attrs.present? -%>
-  <%=l :label_ldap_attributes_on_a_user %>:
+<%=l :label_ldap_attributes_on_a_user %>:
   <% if @test.user_attrs.respond_to?(:attribute_names) -%>
     <%= @test.user_attrs.attribute_names.inspect %>
   <% else -%>
@@ -46,7 +46,7 @@
 <% end -%>
 
 <% if @test.group_attrs.present? -%>
-  <%=l :label_ldap_attributes_on_a_group %>:
+<%=l :label_ldap_attributes_on_a_group %>:
   <% if @test.group_attrs.respond_to?(:attribute_names) -%>
     <%= @test.group_attrs.attribute_names.inspect %>
   <% else -%>
