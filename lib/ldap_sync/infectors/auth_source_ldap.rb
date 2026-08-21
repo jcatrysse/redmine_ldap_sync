@@ -465,7 +465,8 @@ module LdapSync::Infectors::AuthSourceLdap
       cattr_accessor :trace_level do
         :debug
       end
-      unloadable
+      # PATCHED: removed from ActiveSupport in Rails 5.1
+      # unloadable
     end
   end
 end
