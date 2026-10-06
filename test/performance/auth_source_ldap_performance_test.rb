@@ -16,9 +16,11 @@
 # You should have received a copy of the GNU General Public License
 # along with Redmine LDAP Sync.  If not, see <http://www.gnu.org/licenses/>.
 require File.expand_path('../../test_helper', __FILE__)
-require 'rails/performance_test_help'
+require 'benchmark'
 
-class AuthSourceLdapPerformanceTest < ActionDispatch::PerformanceTest
+# ActionDispatch::PerformanceTest (rails/performance_test_help) is gone since
+# Rails 4: time the two syncs with Benchmark and print the result instead.
+class AuthSourceLdapPerformanceTest < ActiveSupport::TestCase
   fixtures :auth_sources, :users, :groups_users, :settings, :custom_fields
   fixtures :email_addresses if Redmine::VERSION::MAJOR >= 3
 
@@ -33,10 +35,20 @@ class AuthSourceLdapPerformanceTest < ActionDispatch::PerformanceTest
   end
 
   def test_sync_groups
-    @auth_source.sync_groups
+    count = Group.count
+    report('sync_groups') { @auth_source.sync_groups }
+    assert_operator Group.count, :>, count
   end
 
   def test_sync_users
-    @auth_source.sync_users
+    count = User.count
+    report('sync_users') { @auth_source.sync_users }
+    assert_operator User.count, :>, count
+  end
+
+  private
+
+  def report(name, &block)
+    $stderr.puts format('%s: %.3fs', name, Benchmark.realtime(&block))
   end
 end
