@@ -973,4 +973,17 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include '1 deleted (rynever)', actual
     assert_include 'therß', actual
   end
+
+  test "LdapSync::DryRun.without_changes should roll back what the sync writes" do
+    created = nil
+    assert_no_difference ['Group.count', 'CustomValue.count', 'User.count'] do
+      LdapSync::DryRun.without_changes do
+        @auth_source.sync_groups
+        @auth_source.sync_users
+        created = [Group.count, User.count]
+      end
+    end
+    assert_operator created[0], :>, Group.count
+    assert_operator created[1], :>, User.count
+  end
 end

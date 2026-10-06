@@ -24,9 +24,11 @@ namespace :redmine do
         init_task
 
         AuthSourceLdap.activate_users! unless ENV['ACTIVATE_USERS'].nil?
-        AuthSourceLdap.all.each do |as|
-          trace "Synchronizing '#{as.name}' users..."
-          as.sync_users
+        run_ldap_sync do
+          AuthSourceLdap.all.each do |as|
+            trace "Synchronizing '#{as.name}' users..."
+            as.sync_users
+          end
         end
       end
 
@@ -34,9 +36,11 @@ namespace :redmine do
       task :sync_groups => :environment do |t, args|
         init_task
 
-        AuthSourceLdap.all.each do |as|
-          trace "Synchronizing '#{as.name}' groups..."
-          as.sync_groups
+        run_ldap_sync do
+          AuthSourceLdap.all.each do |as|
+            trace "Synchronizing '#{as.name}' groups..."
+            as.sync_groups
+          end
         end
       end
 
@@ -61,6 +65,10 @@ namespace :redmine do
           User.send :include, LdapSync::DryRun::User
           Group.send :include, LdapSync::DryRun::Group
         end
+      end
+
+      def run_ldap_sync(&block)
+        ENV['DRY_RUN'].nil? ? yield : LdapSync::DryRun.without_changes(&block)
       end
     end
 
