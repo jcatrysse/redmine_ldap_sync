@@ -29,6 +29,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
     AuthSourceLdap.activate_users = false
     AuthSourceLdap.running_rake = false
+    AuthSourceLdap.dyngroups_updated = false
   end
 
   test "#sync_groups should sync custom fields and create groups" do

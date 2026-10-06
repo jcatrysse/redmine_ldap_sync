@@ -321,7 +321,8 @@ module LdapSync::Infectors::AuthSourceLdap
 
       def dyngroups_fresh?
         if running_rake?
-          !dyngroups_updated?
+          # loaded once per rake run
+          !!dyngroups_updated?
         else
           opts = {}
           if setting.dyngroups_enabled_with_ttl?
