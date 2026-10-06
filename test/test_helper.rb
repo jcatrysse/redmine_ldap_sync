@@ -35,7 +35,11 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
 Rails.backtrace_cleaner.remove_silencers!
 
 class ActiveSupport::TestCase
-  self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
+  if respond_to?(:fixture_paths=)
+    self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
+  else
+    self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
+  end
 
   def clear_ldap_cache!
     FileUtils.rm_rf Rails.root.join("tmp/ldap_cache")
@@ -43,7 +47,11 @@ class ActiveSupport::TestCase
 end
 
 class ActionDispatch::IntegrationTest
-  self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
+  if respond_to?(:fixture_paths=)
+    self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
+  else
+    self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
+  end
 end
 
 module ActionController::TestCase::Behavior
