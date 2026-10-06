@@ -30,7 +30,7 @@ class LdapSettingsControllerTest < ActionController::TestCase
   def test_should_get_index
     get :index
     assert_response :success
-    assert_not_nil assigns(:ldap_settings)
+    assert_select "tr.ldap_setting", 2
 
     assert_select "table tr", 3
     assert_select "a", :text => 'LDAP test server', :count => 1
@@ -41,7 +41,8 @@ class LdapSettingsControllerTest < ActionController::TestCase
   def test_should_get_base_settings_js
     get :base_settings, :format => 'js'
     assert_response :success
-    assert_template 'ldap_settings/base_settings'
+    assert_equal 'text/javascript', response.media_type
+    assert_match /\Avar base_settings = \{.*"active_directory/m, response.body
   end
 
   def test_should_redirect_to_get_edit_on_get_show
@@ -148,8 +149,9 @@ class LdapSettingsControllerTest < ActionController::TestCase
         dyngroups: ''
       } 
     }
-    assert assigns(:ldap_setting).errors.added?(:class_user, :blank), 'An error must be reported for :class_user'
+    assert_select '#errorExplanation li', { :text => /Users objectclass/ }, 'An error must be reported for :class_user'
     assert_response :success
+    assert_equal 'person', LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).class_user
   end
 
   def test_should_update_ldap_setting
@@ -190,7 +192,10 @@ class LdapSettingsControllerTest < ActionController::TestCase
       }
     }
     assert_redirected_to ldap_settings_path
-    assert assigns(:ldap_setting).valid?
+    ldap_setting = LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id)
+    assert ldap_setting.valid?, ldap_setting.errors.full_messages.join(', ')
+    assert_equal 'user', ldap_setting.class_user
+    assert_equal 'memberof', ldap_setting.user_groups
     assert_match /success/, flash[:notice]
   end
 
@@ -203,7 +208,7 @@ class LdapSettingsControllerTest < ActionController::TestCase
     }
 
     assert_response :success
-    assert_equal 'text/plain', response.content_type
+    assert_equal 'text/plain', response.media_type
 
     assert_match /User \"example1\":/,          response.body
     assert_match /Group \"Therß\":/,            response.body
@@ -228,7 +233,7 @@ class LdapSettingsControllerTest < ActionController::TestCase
     }
 
     assert_response :success
-    assert_equal 'text/plain', response.content_type
+    assert_equal 'text/plain', response.media_type
 
     assert_match /Validation errors .* Dynamic groups/m,   response.body
 
