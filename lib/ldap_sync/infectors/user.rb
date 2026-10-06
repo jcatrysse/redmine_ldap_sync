@@ -110,8 +110,11 @@ module LdapSync::Infectors::User
     end
     receiver.class_eval do
       class << self
-        alias_method :try_to_login_without_ldap_sync, :try_to_login
-        alias_method :try_to_login, :try_to_login_with_ldap_sync
+        # The login form calls try_to_login! and try_to_login calls it too
+        # (Redmine 3.4+); wrap the one every login goes through.
+        login_method = method_defined?(:try_to_login!) ? :try_to_login! : :try_to_login
+        alias_method :try_to_login_without_ldap_sync, login_method
+        alias_method login_method, :try_to_login_with_ldap_sync
       end
     end
   end

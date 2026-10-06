@@ -998,4 +998,14 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     @auth_source.sync_users
     assert_not_nil User.find_by_login('example1')
   end
+
+  test "#try_login! (the login form) should sync fields and groups and refuse users locked on LDAP" do
+    user = User.try_to_login!('loadgeek', 'password', false)
+    assert_not_nil user
+    assert_include 'Iardum', user.groups.map(&:lastname)
+    assert_include 'ldap.users', user.groups.map(&:lastname)
+
+    assert_nil User.try_to_login!('tweetmicro', 'password', false)
+    assert User.find_by_login('tweetmicro').locked?
+  end
 end
