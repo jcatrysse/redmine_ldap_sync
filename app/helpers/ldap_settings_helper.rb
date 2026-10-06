@@ -22,15 +22,20 @@ module LdapSettingsHelper
 
   def change_status_link(config)
     if config.active?
-      link_to ldap_sync_icon('circle-minus', l(:button_disable)), disable_ldap_setting_path(config), :method => :put, :class => 'icon icon-disable'
+      link_to ldap_sync_icon('circle-minus', l(:button_disable)), disable_ldap_setting_path(config), :method => :put, :class => ldap_sync_icon_class('icon-disable')
     else
-      link_to ldap_sync_icon('checked', l(:button_enable)), enable_ldap_setting_path(config), :method => :put, :class => 'icon icon-enable'
+      link_to ldap_sync_icon('checked', l(:button_enable)), enable_ldap_setting_path(config), :method => :put, :class => ldap_sync_icon_class('icon-enable')
     end
   end
 
   # SVG icon and label on Redmine 6+, the label alone (with the CSS icon) before
   def ldap_sync_icon(icon, label)
     respond_to?(:sprite_icon) ? sprite_icon(icon, label) : label
+  end
+
+  # The plugin's CSS icon class only where there is no SVG icon
+  def ldap_sync_icon_class(css_icon)
+    respond_to?(:sprite_icon) ? 'icon' : "icon #{css_icon}"
   end
 
   def ldap_setting_tabs(form)

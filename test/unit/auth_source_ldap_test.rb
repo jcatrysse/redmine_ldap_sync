@@ -1015,4 +1015,21 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_nil User.try_to_login!('tweetmicro', 'password', false)
     assert User.find_by_login('tweetmicro').locked?
   end
+
+  test "#sync_groups and #sync_users should load the dynamic groups once per rake run" do
+    @ldap_setting.dyngroups = 'enabled'
+    @ldap_setting.fixed_group = nil
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    AuthSourceLdap.running_rake!
+    AuthSourceLdap.trace_level = :silent
+
+    loads = []
+    @auth_source.define_singleton_method(:update_dyngroups_cache!) {|cache| loads << cache.size; super(cache) }
+    @auth_source.sync_groups
+    @auth_source.sync_users
+
+    assert_equal 1, loads.size, 'dynamic groups loaded once'
+    assert_include 'TweetUsers', User.find_by_login('tweetsave').groups.map(&:lastname)
+    assert_include 'MicroUsers', User.find_by_login('microunit').groups.map(&:lastname)
+  end
 end

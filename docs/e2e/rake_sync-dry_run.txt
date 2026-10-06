@@ -40,20 +40,20 @@ Something inside []
 Group closure on parents
 Something inside []
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b6096e9a8 @myhash={:dn=>["cn=Iardum,ou=Group,dc=redmine,dc=org"], :cn=>["Iardum"]}>, #<Net::LDAP::Entry:0x00007f0b6096e278 @myhash={:dn=>["cn=LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam,ou=Group,dc=redmine,dc=org"], :cn=>["LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0f56548 @myhash={:dn=>["cn=Iardum,ou=Group,dc=redmine,dc=org"], :cn=>["Iardum"]}>, #<Net::LDAP::Entry:0x00007f6fe0f55e18 @myhash={:dn=>["cn=LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam,ou=Group,dc=redmine,dc=org"], :cn=>["LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam"]}>]
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b60968418 @myhash={:dn=>["cn=Therß,ou=Group,dc=redmine,dc=org"], :cn=>["Therß"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0f3ffa0 @myhash={:dn=>["cn=Therß,ou=Group,dc=redmine,dc=org"], :cn=>["Therß"]}>]
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b60962090 @myhash={:dn=>["cn=Therß,ou=Group,dc=redmine,dc=org"], :cn=>["Therß"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0f39c18 @myhash={:dn=>["cn=Therß,ou=Group,dc=redmine,dc=org"], :cn=>["Therß"]}>]
 Could not create group 'LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam': "Name is too long (maximum is 255 characters)"
    -> 5 groups added (bluil, it отдел системные, issekin, therß, iardum) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
 -- Creating user 'edavis' (Eric Davis)...
 Group closure on parents
 Something inside []
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b608782b0 @myhash={:dn=>["cn=Briklør,ou=Group,dc=redmine,dc=org"], :cn=>["Briklør"]}>, #<Net::LDAP::Entry:0x00007f0b60877ce8 @myhash={:dn=>["cn=Enden,ou=Group,dc=redmine,dc=org"], :cn=>["Enden"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0e4fe38 @myhash={:dn=>["cn=Briklør,ou=Group,dc=redmine,dc=org"], :cn=>["Briklør"]}>, #<Net::LDAP::Entry:0x00007f6fe0e4f870 @myhash={:dn=>["cn=Enden,ou=Group,dc=redmine,dc=org"], :cn=>["Enden"]}>]
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b608721d0 @myhash={:dn=>["cn=Bluil,ou=Group,dc=redmine,dc=org"], :cn=>["Bluil"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0e49d58 @myhash={:dn=>["cn=Bluil,ou=Group,dc=redmine,dc=org"], :cn=>["Bluil"]}>]
 Group closure on parents
 Something inside []
    -> 5 groups added (smuaddan, säyeldas, briklør, bluil, enden)
@@ -61,7 +61,7 @@ Something inside []
 -- Could not create user 'incomplete': "Email cannot be blank"
 -- Creating user 'microunit' (Elnora Gershon)...
 Group closure on parents
-Something inside [#<Net::LDAP::Entry:0x00007f0b6075dc40 @myhash={:dn=>["cn=Briklør,ou=Group,dc=redmine,dc=org"], :cn=>["Briklør"]}>]
+Something inside [#<Net::LDAP::Entry:0x00007f6fe0d357f0 @myhash={:dn=>["cn=Briklør,ou=Group,dc=redmine,dc=org"], :cn=>["Briklør"]}>]
 Could not create group 'LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam': "Name is too long (maximum is 255 characters)"
    -> 9 groups added (bluil, enden, it отдел системные, issekin, therß, iardum, worathest, briklør, microusers) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
 -- Creating user 'rubycalm' (Fernando Stemm)...
