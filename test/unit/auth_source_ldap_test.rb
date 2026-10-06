@@ -976,15 +976,22 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
   test "LdapSync::DryRun.without_changes should roll back what the sync writes" do
     created = nil
-    assert_no_difference ['Group.count', 'CustomValue.count', 'User.count'] do
+    AuthSourceLdap.running_rake!
+    AuthSourceLdap.trace_level = :change
+    old_stdout, $stdout = $stdout, StringIO.new
+    assert_no_difference ['Group.count', 'CustomValue.count', 'User.count', 'User.where(:admin => true).count'] do
       LdapSync::DryRun.without_changes do
         @auth_source.sync_groups
         @auth_source.sync_users
         created = [Group.count, User.count]
       end
     end
+    actual, $stdout = $stdout.string, old_stdout
+
     assert_operator created[0], :>, Group.count
     assert_operator created[1], :>, User.count
+    assert_include '[edavis] creating user (eric davis)', actual
+    assert_include '[incomplete] could not create user', actual
   end
 
   test "#sync_groups and #sync_users should work with an anonymous bind" do

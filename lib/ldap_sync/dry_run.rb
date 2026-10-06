@@ -16,9 +16,8 @@
 # You should have received a copy of the GNU General Public License
 # along with Redmine LDAP Sync.  If not, see <http://www.gnu.org/licenses/>.
 module LdapSync::DryRun
-  # Runs the block and rolls back every database change it made: the DryRun
-  # modules do not cover every write (new groups, group memberships,
-  # archiving, admin flags), the rollback does.
+  # Runs the block and rolls back every database change it made. The sync
+  # runs as for real, so its output tells exactly what a real run would do.
   def self.without_changes
     ActiveRecord::Base.transaction(:requires_new => true) do
       yield
