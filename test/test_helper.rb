@@ -40,6 +40,10 @@ class ActiveSupport::TestCase
   else
     self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
   end
+  # Redmine's test_helper declares `fixtures :all` for its own fixture directory;
+  # with the path above those sets do not exist, so only the sets each test
+  # declares are loaded.
+  self.fixture_table_names = []
 
   def clear_ldap_cache!
     FileUtils.rm_rf Rails.root.join("tmp/ldap_cache")
