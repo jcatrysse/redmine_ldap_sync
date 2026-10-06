@@ -18,12 +18,12 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 | Plugin id | `redmine_ldap_sync` |
 | GEOxyz runs today | `master` |
 | Upstream | eea/redmine_ldap_sync master @ 20eb736 (2025-01-30) |
-| Runs on Redmine 7 as is | NEE |
+| Runs on Redmine 7 as is | NEE (before this branch); JA on `redmine70-migration` |
 | Upstream sync | NIET NODIG |
 | After sync | n.v.t. |
 | Complexity (1 trivial .. 5 rewrite) | 2 |
 | Measured on | Redmine 7.0.1 (7.0-stable-GEOxyz + latest 7.0-stable), Rails 8.1.3.1, Ruby 3.3.6, PostgreSQL 16 and MariaDB 10.11 |
-| Branch head when this file was written | `a695b45` |
+| Branch head when this file was written | `a695b45`; migration done up to `eeb58a2` + this update (2026-10-06) |
 
 ## Already on this branch
 
@@ -31,46 +31,178 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 - `c3ff316` Fix FileStore#delete_unless for Rails 7+ cache internals
 - `2908a61` Update test helper and fixtures for Rails 7.2+
 
+Done in the migration session (2026-10-06), one concern per commit, each with a test that fails without it:
+
+| commit | what |
+|---|---|
+| `bdcd089` | Test suite runs: plugin fixtures only (core `fixtures :all`), nested-set fixture, `.codex/start_ldap.sh` (test slapd 2.4 from the Ubuntu 20.04 archive), `test_setup.sh` as root |
+| `10bbbea` | **Breaker**: `Array#sum` of SortedSets (Rails 7.1 removed AS non-numeric sum): every `sync_users` raised TypeError |
+| `17dc70f` | Tests on the Rails 6.1+ test API (assigns/assert_template, media_type, errors.of_kind?) |
+| `e6b7938` | **Bug since 2019 (upstream 2b83c5a)**: `ldap_search` dropped the block: `sync_groups` created nothing, dynamic groups never read (7 tests fixed; the commit message also counts the :change output test, which already passed with slapd 2.4) |
+| `3fbe9b2` | `email_is_taken` always false since Rails 6.1 (`added?` compares the value) |
+| `6d82840` | GEOxyz #5245 reworked (see verdicts) |
+| `b82b6e4` | Rake: dynamic groups were never loaded in a new rake process (`dyngroups_fresh?` inverted) |
+| `c31f76b` | **Security**: CSRF check skipped for every `.js` request: enable/disable/update could be forged |
+| `95c5163` | **Security**: sudo mode for update/enable/disable, like core's auth sources |
+| `b3bed62` | `String#mb_chars` replaced (gone in Rails 8.2) |
+| `12cf296` | Performance test without `rails/performance_test_help` (aborted every full minitest run) |
+| `33f0128`, `cdbcf5f` | Icons: SVG sprite icons on Redmine 6+, CSS icons kept for 5.1, no `:has()` |
+| `8a3bb3e`, `47151c3` | `DRY_RUN` wrote to the database (groups, custom values, memberships) and crashed on new users; now runs the real sync in a transaction that is always rolled back |
+| `82bc649` | LDAP server without bind account (anonymous): edit page HTTP 500, rake aborted |
+| `8cb716e` | Test tab: two PUTs per click (rails-ujs + GEOxyz handler), Dutch hard-coded error text |
+| `3c2235c` | **Bug in production**: sync on login hooked `try_to_login`, the login form calls `try_to_login!`: web logins never synced (groups, fields, locks) |
+| `75e0327`, `b6c66ab` | E2E scenarios, screenshots, MariaDB run, before pictures on 5.1 |
+
 ## Work list for the migration session
 
 In this order: things that break, security, the GEOxyz changes, the open items, then the checks.
 
 **Open items from the analysis** (Dutch; where they conflict with a decision or a priority item above, those win)
 
-1. Test against the real AD on staging: sync_all, sync on login, nested and dynamic groups (FileStore fix now really deletes stale cache entries); could not be exercised here (no LDAP server)
-2. Icons tile on Redmine 7 (CSS background icons without .icon base CSS): add no-repeat/padding or use sprite_icon
-3. Replace String#mb_chars (8x) before Rails 8.2
-4. Test suite: core fixtures :all conflicts with plugin-only fixture path; needs fixture strategy + slapd, and test/performance requires rails/performance_test_help (gone since Rails 4)
+1. Test against the real AD on staging: sync_all, sync on login, nested and dynamic groups (FileStore fix now really deletes stale cache entries). **Done against the plugin's test LDAP (slapd 2.4 with the fixture LDIF: static, nested, dynamic groups, locked users) in unit tests and e2e; still to do against the real AD on staging** (no AD here), see "After the upgrade".
+2. Icons tile on Redmine 7. **Done** (`33f0128`, `cdbcf5f`): sprite_icon on 6+, CSS icons on 5.1.
+3. Replace String#mb_chars. **Done** (`b3bed62`).
+4. Test suite. **Done** (`bdcd089`, `17dc70f`, `12cf296`): plugin fixtures only, test slapd via `.codex/start_ldap.sh`, performance test runs. `test/ui/*` (old Capybara/Selenium UI tests, excluded by the harness as before) were not revived: the e2e scenarios cover the same pages.
 
 **Checks**
 
-5. Run the plugin's whole test suite on Redmine 7.0-stable-GEOxyz with PostgreSQL AND MariaDB, and once on 5.1-stable if the branch is meant to stay 5.1-compatible.
-6. Check Redmine 7 webhooks against this plugin (see "Rules"), and note the result here even if nothing is needed.
-7. Verify every feature of the plugin by hand on a running Redmine 7 (screenshots).
+5. Whole test suite. **Done**, see "Results".
+6. Webhooks. **Checked, nothing needed**: Redmine 7 webhooks cover issue, news, time entry, wiki page and version; this plugin changes none of those payloads. It changes group memberships and admin flags, which core evaluates when it sends (visibility for the webhook owner), so payloads stay consistent.
+7. Every feature in a browser. **Done**, see "Inventory" and docs/e2e.
 
 ## GEOxyz changes to review or re-apply
 
 These GEOxyz commits are on the branch GEOxyz runs today and therefore on this branch. Review each one against the code it now sits on (upstream merges and Redmine 7 core): drop it if upstream or core now does the same, rewrite it if it is not up to the quality rules below (tests, I18n, security, portability), keep it otherwise. Record the verdict per commit in this file.
 
-| commit | date | subject |
-|---|---|---|
-| `b1b0fbf` | 2025-05-21 | Patch: support proxyAddresses and login as fallback for mail #5245 |
-| `1896e51` | 2025-05-21 | Defect: resolve DRY RUN rake task issues #5209 |
-| `b1eabfd` | 2025-05-21 | Patch: add warning on missing login or attributes #5208 |
-| `7fe1f9e` | 2025-05-20 | Defect: prevent crash when rendering LDAP attributes in test view #5198 |
-| `869560b` | 2025-04-26 | * Resolve compatibility issues |
+| commit | date | subject | verdict |
+|---|---|---|---|
+| `b1b0fbf` | 2025-05-21 | Patch: support proxyAddresses and login as fallback for mail #5245 | **Rewritten** (`6d82840`). It overwrote non-synced mail and user-typed values on every sync (3 upstream tests failed) and never found proxyAddresses (not requested from LDAP). Now: only when the sync creates a user, mail = primary `SMTP:` proxy address (fetched) or the login if it is a mail address; firstname/lastname fallbacks as before; synced mail lower-cased as before. The init.rb/infectors.rb loading part kept (works on 5.1 and 7.0, eager load OK). See open question 1. |
+| `1896e51` | 2025-05-21 | Defect: resolve DRY RUN rake task issues #5209 | **Replaced** (`8a3bb3e`, `47151c3`): the stubs still crashed on every new user and let group/membership writes through. Dry run now = real sync in a rolled-back transaction. See open question 3. |
+| `b1eabfd` | 2025-05-21 | Patch: add warning on missing login or attributes #5208 | **Kept** as is: warnings show in rake output and the Test tab (seen in e2e); covered by the sync_users output tests. |
+| `7fe1f9e` | 2025-05-20 | Defect: prevent crash when rendering LDAP attributes in test view #5198 | **Kept**: the Test tab renders attributes of users and groups (e2e test_tab, functional test_should_test). |
+| `869560b` | 2025-04-26 | * Resolve compatibility issues | **Kept**, with a fix: controller param handling and `group_data.to_h` are right; the JS rewrite kept, but the link still had data-remote, so two PUTs per click, and the error text was hard-coded Dutch (`8cb716e`). |
 
 ## After the upgrade (production)
 
 Actions the person doing the upgrade must take, or know about, for this plugin:
 
 - Re-create the cron entry for `redmine:plugins:ldap_sync:sync_all` and run one sync against the real AD.
+  First `DRY_RUN=1 LOG_LEVEL=change rake redmine:plugins:ldap_sync:sync_all` (now truly without changes,
+  and its output is what the real run will do), read it, then the real run.
+- **Expect more changes than before on the first run**: `sync_groups` (and the group part of
+  `sync_all`) did nothing on GEOxyz master because of the ldap_search bug, and dynamic groups were
+  never loaded by rake. The first run will create the LDAP groups that have no members yet, sync
+  group custom fields and add dynamic-group memberships.
+- **Sync on login becomes active for web logins** (it never ran on the login form, `3c2235c`). With
+  the current setting, users get their LDAP groups (and fields) at each login, the required group /
+  account flags are enforced at login, and accounts disabled on AD are refused. Check the
+  "Synchronization actions" settings on staging before the upgrade (open question 4).
+- Administrators are asked for their password (sudo mode, on by default in Redmine 7) when saving,
+  enabling or disabling LDAP sync settings.
+- No schema change; the 14 plugin migrations only touch settings (down/up verified).
+- Test against the real AD on staging: sync_all, login with sync on login, nested and dynamic groups,
+  proxyAddresses fallback for users without `mail`. Not possible here (no AD).
+
+## Results (2026-10-06)
+
+Environment: Redmine 7.0.1 (`7.0-stable-GEOxyz` @ 8067e23), Rails 8.1.3.1, Ruby 3.3.6; Redmine 5.1.13
+(`5.1-stable`) with Ruby 3.2.6; PostgreSQL 16.15, MariaDB 10.11.14; test LDAP: OpenLDAP slapd 2.4.49
+with the plugin's fixture LDIF (`./.codex/start_ldap.sh`).
+
+**Baseline before any change** (branch at `bbbc06f`): minitest aborted with LoadError
+(`rails/performance_test_help`); without the performance test 138 runs, 138 errors ("No fixture files
+found for attachments"). With the fixture fix only, GEOxyz master on Redmine 5.1 had 20 failing tests
+of 138, Redmine 7.0 21 (+24 errors from `Array#sum`): all of them pre-existing bugs listed above.
+
+**Plugin tests** (`./.codex/test_plugin.sh`, all files in one process):
+
+| Redmine | database | result |
+|---|---|---|
+| 7.0-stable-GEOxyz | PostgreSQL 16 | 155 runs, 696 assertions, 0 failures, 0 errors, 0 skips |
+| 7.0-stable-GEOxyz | MariaDB 10.11 | 155 runs, 696 assertions, 0 failures, 0 errors, 0 skips |
+| 5.1-stable | PostgreSQL 16 | 155 runs, 665 assertions, 0 failures, 0 errors, 0 skips |
+| 7.0 + bless_this_redmine_sso + redmine_impersonate (their `redmine70-migration`) | PostgreSQL 16 | 154 runs, 0 failures (before the last added test) |
+
+Migrations: 14 down to 0 and up again on PostgreSQL and MariaDB. `rails zeitwerk:check`: "All is good!".
+Production server boots with eager loading (start_server.sh).
+
+**End to end** (`./.codex/e2e.sh`, production mode, docs/e2e): smoke 14 + core flows 6 + 6 plugin
+scenarios with 40 screenshots, 0 problems, on PostgreSQL (screenshots committed) and on MariaDB
+(report tables in docs/e2e/mariadb, 60 screenshots, 0 problems). Same set with the two
+authentication-related GEOxyz plugins installed: 0 problems. Same scenarios on Redmine 5.1 with this
+branch: 0 problems (the SVG-icon check is for 6+ only). Before pictures (GEOxyz master on 5.1): docs/e2e/before.
+Every screenshot was opened and looked at.
+
+**Review**: own adversarial review of the whole diff; OpenAI review (gpt-5) twice:
+docs/reviews/openai-2026-10-06-b6c66ab.md (3 findings: 1 fixed, 2 rejected with a test/explanation),
+docs/reviews/openai-2026-10-06-cdbcf5f.md (1 finding, rejected with e2e evidence). Nothing open.
+
+## Inventory of functions
+
+| function | how a user reaches it | scenario | screenshots |
+|---|---|---|---|
+| Admin menu entry "LDAP synchronization" | Administration (admin only) | access.mjs | access-admin-menu |
+| List of LDAP servers with Test/Enable/Disable | /admin/ldap_sync | access.mjs, enable_disable.mjs | access-index |
+| Refusal for non-admins, login for anonymous, 404 | same URLs as manager/reporter/outsider/anonymous | access.mjs | access-refused-*, access-anonymous-login, access-unknown-404 |
+| CSRF protection of changes | PUT without token | access.mjs + functional test | access-csrf-refused |
+| Edit settings: tabs, presets ("Base settings"), dependent fields, save, invalid value | /admin/ldap_sync/:id/edit | settings.mjs | settings-* |
+| Sudo mode on save/enable/disable | password prompt (Redmine 7 default) | functional test (a fresh login is already in sudo mode) | - |
+| Enable / disable, refusal of invalid settings | list and edit page | enable_disable.mjs | enable_disable-* |
+| Test tab: users, groups, unsaved form values, invalid settings, server down | edit page, tab Test | test_tab.mjs | test_tab-* |
+| base_settings.js (presets) | loaded by the edit page | settings.mjs (preset), functional test | settings-preset-active-directory |
+| Sync on login: creation on the fly, groups (static, nested, dynamic, Unicode), fields, fixed group, locked on LDAP, wrong password, incomplete user | login form | login_sync.mjs | login_sync-* |
+| rake sync_groups (groups + group custom fields, dynamic groups) | cron / CLI | rake_sync.mjs | rake_sync-groups, rake_sync-group-field, docs/e2e/rake_sync-sync_groups.txt |
+| rake sync_users (create, lock, admin group, LOG_LEVEL) | cron / CLI | rake_sync.mjs | rake_sync-sync-users-output, -users, -locked, -dynamic-group |
+| rake sync_all, admin flag revoked, disabled sync skipped | cron / CLI | rake_sync.mjs | rake_sync-sync-all-output, -disabled-skips |
+| DRY_RUN (no changes) | `DRY_RUN=1` | rake_sync.mjs + unit test | rake_sync-dry-run |
+| ACTIVATE_USERS | `ACTIVATE_USERS=1` | unit tests (activate_users flag) | - |
+| Stylesheet hook (view_layouts_base_html_head) | every page | smoke (no missing assets) | smoke-* |
+| Webhooks | n/a, see work list 6 | - | - |
+
+## Findings recorded, not changed (upstream behaviour)
+
+- Test tab and rake output at the default log level contain debug lines from upstream 2b83c5a
+  ("Group closure on parents", "Something inside [#<Net::LDAP::Entry ...>]") and, on an LDAP error,
+  a full Ruby backtrace with server paths (admin only; a unit test expects the backtrace).
+  `LOG_LEVEL=change` hides the debug lines. See open question 5.
+- "Validation errors on the ldap settings:" / "on the test:" in the .text.erb views are not translated.
+- The bind password on the Test tab is a text field (shown in clear).
+- `account_locked_test` is Ruby code evaluated by the plugin (admin-only setting, by design).
+- After an "incomplete" LDAP user completes the registration form, custom fields are synced at the
+  next login, not right away.
+- A user locked in Redmine with sync on login sees "Invalid user or password" instead of core's
+  "account locked" message (the plugin returns nothing for inactive users, as it always did on the API path).
+- The 280-character "Loremipsum..." group of the test LDIF cannot be created in Redmine (name > 255);
+  the sync reports it and goes on.
+- A dry run refreshes the LDAP caches in tmp/ldap_cache with current LDAP data (no Redmine data).
+
+## Open questions for Jan
+
+Built as recommended; say so if you want otherwise.
+
+1. **GEOxyz #5245 fallbacks only when the sync creates a user** (recommended, built). Alternative:
+   on every sync as before, which overwrote locally maintained mail addresses and names whenever LDAP
+   had none and broke the "incomplete user" registration. If GEOxyz relies on the login (UPN) being
+   copied into mail for existing users, say so.
+2. **Sudo mode for saving/enabling/disabling LDAP sync settings** (recommended, built, same as core
+   for LDAP authentication). Alternative: no password prompt.
+3. **DRY_RUN = real sync in a rolled-back transaction** (recommended, built). The output now shows
+   the real outcome ("[edavis] creating user", "5 groups added") instead of the old "!! Added to
+   groups" lines. Alternative: keep the stubs and fix them one by one (they missed writes and crashed).
+4. **Sync on login for web logins** now works (it never ran on the login form). Recommended: keep;
+   it is what the setting says. Check "Synchronize on login", "Users must be members of" and the
+   account flags on staging first. Alternative: set "Synchronize on login" to disabled to keep today's
+   behaviour.
+5. Remove the upstream debug lines and the backtrace from the Test tab / rake output? Recommended:
+   yes, in a small follow-up (one test has to change from "contains ldap_test.rb" to "contains the
+   error message").
 
 ## How to test
 
 ```sh
 ./.codex/redmine_clone.sh 7.0-stable-GEOxyz      # or 5.1-stable / 6.1-stable / 7.0-stable
 ./.codex/test_setup.sh                                 # RMP_DB=mariadb for MariaDB, RMP_PROVISION_DB=0 if a server runs
+./.codex/start_ldap.sh                                 # test LDAP on localhost:3389 (the tests and e2e need it)
 ./.codex/test_plugin.sh                                # minitest + rspec of this plugin
 ```
 

@@ -32,6 +32,7 @@ the measured state, the work list and the rules. Work on branch `redmine70-migra
 ```sh
 ./.codex/redmine_clone.sh 7.0-stable-GEOxyz      # or 5.1-stable / 6.1-stable / 7.0-stable
 ./.codex/test_setup.sh                                 # RMP_DB=mariadb for MariaDB, RMP_PROVISION_DB=0 if a server runs
+./.codex/start_ldap.sh                                 # test LDAP (slapd) on localhost:3389, needed by tests and e2e
 ./.codex/test_plugin.sh                                # minitest + rspec of this plugin
 ```
 
