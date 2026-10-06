@@ -916,4 +916,42 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
     assert_equal 'tweetmicro@example.com', user.mail
   end
+
+  test "#find_or_create_user should take the primary SMTP proxy address when LDAP has no mail" do
+    def @auth_source.find_user(ldap, login, attrs, &block)
+      return ['smtp:alias@fakemail.com', 'SMTP:Incomplete.User@FakeMail.com'] if attrs == 'proxyAddresses'
+      super
+    end
+
+    assert_nil User.find_by_login('incomplete')
+    assert_not_nil @auth_source.send(:find_or_create_user, 'incomplete'), 'Find or create'
+
+    user = User.find_by_login('incomplete')
+    assert_equal 'incomplete.user@fakemail.com', user.mail
+    assert_equal 'incomplete', user.firstname
+    assert_equal 'User', user.lastname
+  end
+
+  test "#find_or_create_user should use a mail address login when LDAP has no mail" do
+    fields = @auth_source.send(:get_user_fields, 'J.Doe@FakeMail.com', { 'sn' => ['Doe'] }, :include_required => true)
+
+    assert_equal 'j.doe@fakemail.com', fields['mail']
+    assert_equal 'J.Doe', fields['firstname']
+    assert_equal 'Doe', fields['lastname']
+  end
+
+  test "#find_or_create_user should not use a login that is no mail address as mail" do
+    fields = @auth_source.send(:get_user_fields, 'incomplete', { 'sn' => ['User'] }, :include_required => true)
+
+    assert_nil fields['mail']
+    assert_equal 'incomplete', fields['firstname']
+    assert_equal 'LDAP-User', @auth_source.send(:get_user_fields, 'incomplete', {}, :include_required => true)['lastname']
+    assert_nil @auth_source.send(:find_or_create_user, 'incomplete')
+    assert_nil User.find_by_login('incomplete')
+  end
+
+  test "#sync_user should store a synced mail address in lower case and keep the other fields of an existing user" do
+    fields = @auth_source.send(:get_user_fields, 'example1', { 'mail' => ['Example1@Redmine.ORG'] })
+    assert_equal({ 'mail' => 'example1@redmine.org' }, fields.slice('mail', 'firstname', 'lastname'))
+  end
 end

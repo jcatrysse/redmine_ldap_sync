@@ -1,46 +1,43 @@
 # encoding: utf-8
 #
-# Only active during the rake task (running_rake? == true)
-# Fills in required Redmine fields when LDAP leaves them blank.
+# GEOxyz #5245: fills in the required Redmine fields when LDAP leaves them blank,
+# so that the sync can create the user:
+#   mail      -> primary SMTP address in proxyAddresses -> login, if that is a mail address
+#   firstname -> login (the part before '@')
+#   lastname  -> 'LDAP-User'
+# Only when a user is created by the sync (include_required); an existing user
+# keeps what Redmine has. A synced mail address is always stored in lower case.
 
 module LdapSync
   module Patches
     module EntityManagerPatch
-      # we only need to override a single helper that collects the raw values
+      MAIL_LOGIN = /\A[^@\s]+@[^@\s]+\z/
+
       def get_user_fields(username, user_data = nil, options = {})
-        # call the original helper first -------------------------------
         fields = super
 
-        # nothing to do during on-the-fly login ------------------------
-        #return fields unless running_rake?
+        fields['mail'] = fields['mail'].to_s.downcase if fields['mail'].present?
+        return fields unless options.try(:fetch, :include_required, false)
 
-        # --------------------------------------------------------------
-        # 1.  MAIL  – try proxyAddresses → login → leave blank
-        # --------------------------------------------------------------
         if fields['mail'].blank?
-          proxy = Array(
-            user_data&.[]('proxyAddresses') ||
-            user_data&.[]('proxyaddresses')
-          ).find { |p| p.to_s.start_with?('SMTP:') }
-
-          fields['mail'] =
-            (proxy ? proxy.sub(/^SMTP:/i, '') : username).to_s.downcase
-        else
-          fields['mail'] = fields['mail'].to_s.downcase
+          mail = primary_smtp_address(username, user_data) || (username if MAIL_LOGIN.match?(username.to_s))
+          fields['mail'] = mail.downcase if mail
         end
-
-        # --------------------------------------------------------------
-        # 2.  FIRST / LAST NAME – derive from login if empty
-        # --------------------------------------------------------------
-        if fields['firstname'].blank?
-          fields['firstname'] = username.split('@').first
-        end
-
-        if fields['lastname'].blank?
-          fields['lastname'] = 'LDAP-User'
-        end
+        fields['firstname'] = username.split('@').first if fields['firstname'].blank?
+        fields['lastname'] = 'LDAP-User' if fields['lastname'].blank?
 
         fields
+      end
+
+      private
+
+      def primary_smtp_address(username, user_data)
+        addresses = user_data && (user_data[:proxyaddresses] || user_data['proxyAddresses'])
+        if addresses.blank?
+          addresses = with_ldap_connection {|ldap| find_user(ldap, username, 'proxyAddresses') }
+        end
+        primary = Array(addresses).find {|a| a.to_s.start_with?('SMTP:') }
+        primary && primary.to_s.sub(/\ASMTP:/, '')
       end
     end
   end
