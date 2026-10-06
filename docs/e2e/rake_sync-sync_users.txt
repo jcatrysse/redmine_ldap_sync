@@ -1,0 +1,26 @@
+$ LOG_LEVEL=change rake redmine:plugins:ldap_sync:sync_users
+-- Warning: User 'example1' is missing account_flags attribute (description)
+-- Warning: User 'edavis' is missing account_flags attribute (description)
+-- Warning: User 'systemhack' is missing account_flags attribute (description)
+-- Warning: User 'tweetsave' is missing account_flags attribute (description)
+-- Warning: User 'microunit' is missing account_flags attribute (description)
+[tweetmicro] locked active user (rae croll)
+[tweetmicro] 7 groups added (anbely, enden, issekin, rill, rynever, microusers, tweetusers)
+[LoadGeek] creating user (christián earheart)
+[LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam] could not create group: "name is too long (maximum is 255 characters)"
+[LoadGeek] 5 groups added (bluil, it отдел системные, issekin, therß, iardum) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
+[LoadGeek] granted admin privileges: member of group 'therß'
+[edavis] creating user (eric davis)
+[edavis] 5 groups added (smuaddan, säyeldas, briklør, bluil, enden)
+[example1] creating user (example one)
+[incomplete] could not create user: "email cannot be blank"
+[microunit] creating user (elnora gershon)
+[LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam] could not create group: "name is too long (maximum is 255 characters)"
+[microunit] 9 groups added (bluil, enden, it отдел системные, issekin, therß, iardum, worathest, briklør, microusers) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
+[microunit] granted admin privileges: member of group 'therß'
+[rubycalm] creating user (fernando stemm)
+[rubycalm] 2 groups added (příliš žluťoučký kůň úpěl ďábelské ódy, rynever)
+[systemhack] creating user (darryl ditto)
+[systemhack] 6 groups added (anbely, säyeldas, briklør, bluil, enden, worathest)
+[tweetsave] creating user (nelson meriwether)
+[tweetsave] 5 groups added (anbely, worathest, briklør, bluil, tweetusers)

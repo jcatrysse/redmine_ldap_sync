@@ -1,0 +1,12 @@
+$ LOG_LEVEL=change rake redmine:plugins:ldap_sync:sync_all
+[LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam] could not create group: "name is too long (maximum is 255 characters)"
+-- Warning: User 'example1' is missing account_flags attribute (description)
+-- Warning: User 'edavis' is missing account_flags attribute (description)
+-- Warning: User 'systemhack' is missing account_flags attribute (description)
+-- Warning: User 'tweetsave' is missing account_flags attribute (description)
+-- Warning: User 'microunit' is missing account_flags attribute (description)
+[LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam] could not create group: "name is too long (maximum is 255 characters)"
+[LoadGeek] revoked admin privileges: not member of group 'rill'
+[incomplete] could not create user: "email cannot be blank"
+[LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam] could not create group: "name is too long (maximum is 255 characters)"
+[microunit] revoked admin privileges: not member of group 'rill'
