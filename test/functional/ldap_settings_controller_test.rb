@@ -239,4 +239,28 @@ class LdapSettingsControllerTest < ActionController::TestCase
 
     assert_no_match /ldap_test\.rb/, response.body, 'Should not throw an error'
   end
+
+  def test_should_refuse_changes_without_authenticity_token_in_js_format
+    @ldap_setting.active = false; @ldap_setting.save
+    ActionController::Base.allow_forgery_protection = true
+
+    put :enable, params: { id: @ldap_setting.id, format: 'js' }
+    assert_response 422
+    assert !LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).active?, 'LdapSetting must stay disabled'
+
+    put :update, params: { id: @ldap_setting.id, format: 'js', ldap_setting: { admin_group: 'Rynever' } }
+    assert_response 422
+    assert_not_equal 'Rynever', LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).admin_group
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
+
+  def test_should_get_base_settings_js_with_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+    get :base_settings, :format => 'js'
+    assert_response :success
+    assert_equal 'text/javascript', response.media_type
+  ensure
+    ActionController::Base.allow_forgery_protection = false
+  end
 end

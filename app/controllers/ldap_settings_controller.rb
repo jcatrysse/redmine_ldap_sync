@@ -23,8 +23,10 @@ class LdapSettingsController < ApplicationController
   before_action :find_ldap_setting, :only => [:show, :edit, :update, :test, :enable, :disable]
   before_action :update_ldap_setting_from_params, :only => [:edit, :update, :test]
 
+  # base_settings.js is loaded by a <script> tag (a GET without an XHR), which
+  # the cross-origin check would refuse. Nothing else skips the CSRF check.
   if respond_to? :skip_before_action
-    skip_before_action :verify_authenticity_token, :if => :js_request?
+    skip_before_action :verify_authenticity_token, :only => :base_settings
   end
 
   # GET /ldap_settings
@@ -107,10 +109,6 @@ class LdapSettingsController < ApplicationController
   end
 
   private
-
-    def js_request?
-      request.format.js?
-    end
 
     def update_ldap_setting_from_params
       %w(user group).each do |e|
