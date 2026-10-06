@@ -20,6 +20,8 @@ class LdapSettingsController < ApplicationController
   menu_item :ldap_sync
 
   before_action :require_admin
+  # same as core for the authentication modes these settings belong to
+  require_sudo_mode :update, :enable, :disable
   before_action :find_ldap_setting, :only => [:show, :edit, :update, :test, :enable, :disable]
   before_action :update_ldap_setting_from_params, :only => [:edit, :update, :test]
 

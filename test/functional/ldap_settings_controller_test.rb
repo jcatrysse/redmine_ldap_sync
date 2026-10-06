@@ -263,4 +263,22 @@ class LdapSettingsControllerTest < ActionController::TestCase
   ensure
     ActionController::Base.allow_forgery_protection = false
   end
+
+  def test_should_require_sudo_mode_to_change_a_setting
+    Redmine::SudoMode.stubs(:enabled?).returns(true)
+
+    put :disable, params: { id: @ldap_setting.id }
+    assert_response :success
+    assert_select 'input[name=sudo_password]'
+    assert LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).active?, 'LdapSetting must stay enabled'
+
+    put :update, params: { id: @ldap_setting.id, ldap_setting: { admin_group: 'Rynever' } }
+    assert_response :success
+    assert_select 'input[name=sudo_password]'
+    assert_not_equal 'Rynever', LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).admin_group
+
+    put :disable, params: { id: @ldap_setting.id, sudo_password: 'admin' }
+    assert_redirected_to ldap_settings_path
+    assert !LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).active?, 'LdapSetting must be disabled'
+  end
 end
