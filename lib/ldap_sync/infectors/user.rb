@@ -70,8 +70,9 @@ module LdapSync::Infectors::User
     # Compatibility with redmine 2.x
     def email_is_taken
       if respond_to?(:email_address)
-        # Redmine > 3.x
-        email_address.errors.added? :address, :taken
+        # Redmine > 3.x; since Rails 6.1 added? also compares the error's value
+        errors = email_address.errors
+        errors.respond_to?(:of_kind?) ? errors.of_kind?(:address, :taken) : errors.added?(:address, :taken)
       else
         # Redmine < 3.x
         errors.added? :mail, :taken
