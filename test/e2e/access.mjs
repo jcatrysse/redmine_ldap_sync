@@ -8,7 +8,10 @@ const t = await e2e('access');
 
 await t.login('admin');
 await t.go('/admin');
-if (!(await t.page.locator('#admin-menu a.ldap-sync svg').count())) t.problems.push('admin menu entry has no SVG icon');
+// Redmine 6+ draws its menu icons as SVG; then ours must too (5.1 keeps the CSS icon)
+if (await t.page.locator('#admin-menu a.users svg').count() && !(await t.page.locator('#admin-menu a.ldap-sync svg').count())) {
+  t.problems.push('admin menu entry has no SVG icon');
+}
 await t.shot('admin-menu', 'Admin menu entry "LDAP synchronization" with the Redmine 7 icon (no tiled image)');
 
 await t.page.click('#admin-menu a.ldap-sync');
