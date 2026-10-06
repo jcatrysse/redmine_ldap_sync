@@ -115,8 +115,7 @@ $(document).ready(function () {
             $('#test-result').text(response);
           },
           error: function (xhr, status, error) {
-            console.error('AJAX Error:', error);
-            $('#test-result').text('Er is een fout opgetreden.');
+            $('#test-result').text(xhr.status + ' ' + (xhr.statusText || error));
           },
         });
       });

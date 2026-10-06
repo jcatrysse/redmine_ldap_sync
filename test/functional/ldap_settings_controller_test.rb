@@ -290,4 +290,12 @@ class LdapSettingsControllerTest < ActionController::TestCase
     assert_select 'input[name=?]', 'ldap_test[test_users]'
     assert_select 'input[name=?]', 'ldap_test[bind_user]', 0
   end
+
+  def test_execute_link_of_the_test_tab_should_be_handled_by_the_plugin_script_only
+    get :edit, params: { id: @auth_source.id, tab: 'Test' }
+    assert_response :success
+    # ldap_settings.js sends the form; data-remote/data-method made rails-ujs send a second PUT
+    assert_select 'a#commit-test[href=?]', '/admin/ldap_sync/1/test.text'
+    assert_select 'a#commit-test[data-remote], a#commit-test[data-method]', 0
+  end
 end

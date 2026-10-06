@@ -10,8 +10,7 @@
     <p><%= t.label :bind_password %><%= t.text_field :bind_password %></p>
   <% end -%>
 
-  <p><%= link_to l(:button_execute), { :action => 'test', :format => 'text' },
-          :remote => true, :method => 'put', :id => 'commit-test' %></p>
+  <p><%= link_to l(:button_execute), { :action => 'test', :format => 'text' }, :id => 'commit-test' %></p>
   <div class="autoscroll">
   <fieldset>
     <legend><%=l(:label_result)%></legend>
