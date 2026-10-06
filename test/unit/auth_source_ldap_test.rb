@@ -955,4 +955,22 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     fields = @auth_source.send(:get_user_fields, 'example1', { 'mail' => ['Example1@Redmine.ORG'] })
     assert_equal({ 'mail' => 'example1@redmine.org' }, fields.slice('mail', 'firstname', 'lastname'))
   end
+
+  test "#sync_users and #sync_groups should not use deprecated Rails API" do
+    @ldap_setting.nested_groups = 'on_parents'
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    AuthSourceLdap.running_rake!
+    AuthSourceLdap.trace_level = :change
+
+    old_stdout, $stdout = $stdout, StringIO.new
+    if ActiveSupport.respond_to?(:deprecator)
+      assert_not_deprecated(ActiveSupport.deprecator) { @auth_source.sync_groups; @auth_source.sync_users }
+    else
+      assert_not_deprecated { @auth_source.sync_groups; @auth_source.sync_users }
+    end
+    actual, $stdout = $stdout.string, old_stdout
+
+    assert_include '1 deleted (rynever)', actual
+    assert_include 'therß', actual
+  end
 end
