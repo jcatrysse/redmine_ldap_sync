@@ -2,3 +2,5 @@ coverage
 tmp
 .svn
 .directory
+# Redmine checkout made by .codex/redmine_clone.sh
+/redmine/
