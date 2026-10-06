@@ -15,6 +15,7 @@ Redmine::Plugin.register :redmine_ldap_sync do
        :ldap_sync,
        { controller: 'ldap_settings', action: 'index' },
        caption: :label_ldap_synchronization,
+       icon:    'reload', # Redmine 6+, ignored before
        html:    { class: 'icon icon-ldap-sync' }
 end
 
