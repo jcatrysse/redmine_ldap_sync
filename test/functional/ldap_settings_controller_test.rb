@@ -281,4 +281,13 @@ class LdapSettingsControllerTest < ActionController::TestCase
     assert_redirected_to ldap_settings_path
     assert !LdapSetting.find_by_auth_source_ldap_id(@ldap_setting.id).active?, 'LdapSetting must be disabled'
   end
+
+  def test_should_get_edit_of_an_ldap_server_with_anonymous_bind
+    assert_nil auth_sources(:auth_sources_002).account
+
+    get :edit, params: { id: 2, tab: 'Test' }
+    assert_response :success
+    assert_select 'input[name=?]', 'ldap_test[test_users]'
+    assert_select 'input[name=?]', 'ldap_test[bind_user]', 0
+  end
 end

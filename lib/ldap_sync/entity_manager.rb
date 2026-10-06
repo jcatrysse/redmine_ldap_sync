@@ -18,7 +18,7 @@
 module LdapSync::EntityManager
 
   public
-  def connect_as_user?; setting.account.include?('$login'); end
+  def connect_as_user?; setting.account.to_s.include?('$login'); end
 
   private
   def get_user_fields(username, user_data=nil, options={})

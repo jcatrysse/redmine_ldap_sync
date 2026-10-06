@@ -986,4 +986,16 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_operator created[0], :>, Group.count
     assert_operator created[1], :>, User.count
   end
+
+  test "#sync_groups and #sync_users should work with an anonymous bind" do
+    @auth_source.account = nil
+    @auth_source.account_password = nil
+    assert @auth_source.save, @auth_source.errors.full_messages.join(', ')
+
+    assert_difference 'Group.count', 11 do
+      @auth_source.sync_groups
+    end
+    @auth_source.sync_users
+    assert_not_nil User.find_by_login('example1')
+  end
 end
