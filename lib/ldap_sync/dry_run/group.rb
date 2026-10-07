@@ -15,13 +15,31 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Redmine LDAP Sync.  If not, see <http://www.gnu.org/licenses/>.
-module LdapSync::DryRun
-  # Runs the block and rolls back every database change it made. The sync
-  # runs as for real, so its output tells exactly what a real run would do.
-  def self.without_changes
-    ActiveRecord::Base.transaction(:requires_new => true) do
-      yield
-      raise ActiveRecord::Rollback
+
+module LdapSync::DryRun::Group
+
+  module InstanceMethods
+    def find_or_create_by_lastname(lastname, attributes = {})
+      group = find_by_lastname(lastname)
+      return group if group.present?
+
+      group = ::Group.new(attributes.merge(:lastname => lastname))
+      puts "   !! New group '#{lastname}'" if group.valid?
+
+      group
     end
   end
+
+  def self.included(receiver)
+    receiver.send(:include, InstanceMethods)
+
+    unless receiver.reflect_on_association(:users)
+      receiver.has_and_belongs_to_many :users do
+        def <<(users)
+          puts "   !! Added to group '#{proxy_association.owner.lastname}'"
+        end
+      end
+    end
+  end
+
 end
