@@ -31,3 +31,12 @@ What to do:
 7. Update Status, the inventory, the work list and "After the upgrade". Push `redmine70-migration` after every commit.
 8. These decisions are final; do not stop to ask about them. If one turns out to be impossible, write down why in the plan and carry on with the rest.
 9. End with a short report in Dutch: per decision what you did (commit), test numbers, e2e numbers (scenarios, screenshots, problems), the review result, what is left for Jan.
+
+## Round 2, decided by Jan on 2026-10-07 (evening)
+
+Jan answered these follow-up questions from the migration report the same way, one at a time, in the coordinating session.
+
+- redmine_ldap_sync-n2-1 (ldap_sync 4): Bij het opslaan, aanzetten of uitzetten van de LDAP-synchronisatie vraagt Redmine nu eerst opnieuw het wachtwoord van de beheerder, zoals Redmine 7 dat zelf doet bij de LDAP-aanmelding. Zo laten?
+  Jan chose: "Wachtwoord vragen" (Zo gebouwd, gelijk aan de LDAP-instellingen van Redmine zelf.). Already built: keep it and record the decision.
+- redmine_ldap_sync-n2-2 (ldap_sync 5): Een proefrun (DRY_RUN) voert nu de echte synchronisatie uit en draait daarna alles terug. Zo toont de uitvoer wat er echt zou gebeuren. De oude proefrun miste wijzigingen en liep soms vast. Zo laten?
+  Jan chose: "Oude proefrun herstellen" (De oude manier blijft, en de fouten erin worden één voor één opgelost.). Carry this out.
