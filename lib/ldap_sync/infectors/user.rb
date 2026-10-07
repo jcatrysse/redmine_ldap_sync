@@ -81,8 +81,10 @@ module LdapSync::Infectors::User
   end
 
   module ClassMethods
-    def try_to_login_with_ldap_sync(*args)
-      user = try_to_login_without_ldap_sync(*args)
+    # The login form calls try_to_login! and try_to_login calls it too, so
+    # every login goes through here. Prepended (see patch_login).
+    def try_to_login!(*args)
+      user = super
       return user unless user.try(:sync_on_login?)
 
       login, password = *args
@@ -100,22 +102,19 @@ module LdapSync::Infectors::User
     end
   end
 
+  # prepend, not alias_method: other plugins patch try_to_login! too, and an
+  # alias taken after their prepend calls itself forever
+  def self.patch_login(receiver)
+    receiver.singleton_class.prepend(ClassMethods) unless receiver.singleton_class < ClassMethods
+  end
+
   def self.included(receiver)
-    receiver.extend(ClassMethods)
+    patch_login(receiver)
     receiver.send(:include, InstanceMethods)
 
     receiver.instance_eval do
       after_create :add_to_fixed_group, :sync_fields_and_groups
       delegate :sync_on_login?, :to => :auth_source, :allow_nil => true
-    end
-    receiver.class_eval do
-      class << self
-        # The login form calls try_to_login! and try_to_login calls it too
-        # (Redmine 3.4+); wrap the one every login goes through.
-        login_method = method_defined?(:try_to_login!) ? :try_to_login! : :try_to_login
-        alias_method :try_to_login_without_ldap_sync, login_method
-        alias_method login_method, :try_to_login_with_ldap_sync
-      end
     end
   end
 end

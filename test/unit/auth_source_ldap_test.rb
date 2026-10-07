@@ -1033,4 +1033,17 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include 'TweetUsers', User.find_by_login('tweetsave').groups.map(&:lastname)
     assert_include 'MicroUsers', User.find_by_login('microunit').groups.map(&:lastname)
   end
+
+  test "the login patch should be prepended and work below another plugin's prepend of try_to_login!" do
+    assert_equal LdapSync::Infectors::User::ClassMethods, User.singleton_class.instance_method(:try_to_login!).owner
+
+    # another plugin prepended try_to_login! before this one is loaded
+    klass = Class.new { def self.try_to_login!(login, password, active_only = true); nil; end }
+    klass.singleton_class.prepend(Module.new { def try_to_login!(*args); super; end })
+    LdapSync::Infectors::User.patch_login(klass)
+    LdapSync::Infectors::User.patch_login(klass)
+
+    assert_nil klass.try_to_login!('loadgeek', 'password')
+    assert_equal 1, klass.singleton_class.ancestors.count(LdapSync::Infectors::User::ClassMethods)
+  end
 end
