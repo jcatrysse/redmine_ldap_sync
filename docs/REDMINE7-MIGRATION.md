@@ -47,7 +47,7 @@ Done in the migration session (2026-10-06), one concern per commit, each with a 
 | `b3bed62` | `String#mb_chars` replaced (gone in Rails 8.2) |
 | `12cf296` | Performance test without `rails/performance_test_help` (aborted every full minitest run) |
 | `33f0128`, `cdbcf5f` | Icons: SVG sprite icons on Redmine 6+, CSS icons kept for 5.1, no `:has()` |
-| `8a3bb3e`, `47151c3` | `DRY_RUN` wrote to the database (groups, custom values, memberships) and crashed on new users; now runs the real sync in a transaction that is always rolled back |
+| `8a3bb3e`, `47151c3` | `DRY_RUN` wrote to the database (groups, custom values, memberships) and crashed on new users; ran the real sync in a rolled-back transaction. **Replaced** after Jan's decision n2-2, see below |
 | `82bc649` | LDAP server without bind account (anonymous): edit page HTTP 500, rake aborted |
 | `8cb716e` | Test tab: two PUTs per click (rails-ujs + GEOxyz handler), Dutch hard-coded error text |
 | `3c2235c` | **Bug in production**: sync on login hooked `try_to_login`, the login form calls `try_to_login!`: web logins never synced (groups, fields, locks) |
@@ -55,6 +55,12 @@ Done in the migration session (2026-10-06), one concern per commit, each with a 
 | `88b1add` | Jan q3: no debug lines in Test tab / rake output, error as one line, backtrace only in the log |
 | `39379f8` | Jan (general): `User.try_to_login!` patched with `prepend` instead of `alias_method` |
 | `f67cd72` | Jan (general): Redmine 7 only, 5.1 fallbacks removed, requires_redmine 7.0.0 |
+| `7011f81` | Jan n2-2: old DRY_RUN restored (stub modules of GEOxyz 1896e51, no rollback) |
+| `f745a26` | DRY_RUN fix 1: stubs prepended behind a switch (`LdapSync::DryRun.enable!`); `include` never reached `User#lock!`/`activate!`, accounts were really locked/activated |
+| `e9a8d7d` | DRY_RUN fix 2: `archive!` stubbed (removed groups and roles, locked the account) |
+| `b9f2447` | DRY_RUN fix 3: group memberships of existing users (reporting proxy, `member_of_group?`; proxy `<<`/`delete` with several groups) |
+| `95676af` | DRY_RUN fix 4: `save` validates instead of nil: no crash on new users, report "Creating user" / real errors |
+| `2bf8745` | DRY_RUN fix 5: `Group#save` stubbed: no groups and group fields created/updated |
 
 ## Work list for the migration session
 
@@ -90,8 +96,9 @@ These GEOxyz commits are on the branch GEOxyz runs today and therefore on this b
 Actions the person doing the upgrade must take, or know about, for this plugin:
 
 - Re-create the cron entry for `redmine:plugins:ldap_sync:sync_all` and run one sync against the real AD.
-  First `DRY_RUN=1 LOG_LEVEL=change rake redmine:plugins:ldap_sync:sync_all` (now truly without changes,
-  and its output is what the real run will do), read it, then the real run.
+  First `DRY_RUN=1 rake redmine:plugins:ldap_sync:sync_all` (the old dry run, fixed: it no longer
+  writes users, groups, memberships, roles or admin flags; changes are reported as "Creating ...",
+  "!! Added to groups ...", "!! Locked/Archived user ..."), read it, then the real run.
 - **Expect more changes than before on the first run**: `sync_groups` (and the group part of
   `sync_all`) did nothing on GEOxyz master because of the ldap_search bug, and dynamic groups were
   never loaded by rake. The first run will create the LDAP groups that have no members yet, sync
@@ -185,7 +192,7 @@ docs/reviews/openai-2026-10-06-cdbcf5f.md (1 finding, rejected with e2e evidence
 | rake sync_groups (groups + group custom fields, dynamic groups) | cron / CLI | rake_sync.mjs | rake_sync-groups, rake_sync-group-field, docs/e2e/rake_sync-sync_groups.txt |
 | rake sync_users (create, lock, admin group, LOG_LEVEL) | cron / CLI | rake_sync.mjs | rake_sync-sync-users-output, -users, -locked, -dynamic-group |
 | rake sync_all, admin flag revoked, disabled sync skipped | cron / CLI | rake_sync.mjs | rake_sync-sync-all-output, -disabled-skips |
-| DRY_RUN (no changes) | `DRY_RUN=1` | rake_sync.mjs + unit test | rake_sync-dry-run |
+| DRY_RUN (old stubs, fixed; no changes) on empty and on synced data | `DRY_RUN=1` | rake_sync.mjs + 7 unit tests | rake_sync-dry-run, rake_sync-dry-run-existing, docs/e2e/rake_sync-dry_run*.txt |
 | ACTIVATE_USERS | `ACTIVATE_USERS=1` | unit tests (activate_users flag) | - |
 | Stylesheet hook (view_layouts_base_html_head) | every page | smoke (no missing assets) | smoke-* |
 | Login and core pages with the plugin (and the other GEOxyz plugins) installed: Project > Settings, issue list, issue page, private project | admin, manager, reporter, outsider | core_pages.mjs | core_pages-* |
@@ -236,16 +243,20 @@ For this plugin:
    (Leesbaardere uitvoer; één test moet dan op de foutmelding zelf controleren in plaats van op de
    bestandsnaam.). Built in `88b1add`.
 
+Round 2, decided by Jan on 2026-10-07 (evening), docs/DECISIONS-2026-10-07.md:
+4. **redmine_ldap_sync-n2-1** (open question 2, sudo mode): Jan chose "Wachtwoord vragen" (Zo
+   gebouwd, gelijk aan de LDAP-instellingen van Redmine zelf.). Kept as built (`95c5163`).
+5. **redmine_ldap_sync-n2-2** (open question 3, DRY_RUN): Jan chose "Oude proefrun herstellen" (De
+   oude manier blijft, en de fouten erin worden één voor één opgelost.). Built: old stubs restored
+   (`7011f81`) and their errors fixed one per commit, each with a test that fails without it:
+   `f745a26`, `e9a8d7d`, `b9f2447`, `95676af`, `2bf8745` (see "Already on this branch"). The admin
+   flag path (`set_admin!`/`unset_admin!` through `update_attribute` -> `save`) was already covered by
+   the `save` stub; it has a regression test now. What the old stubs still do not cover: the LDAP
+   caches in tmp/ldap_cache are written with current LDAP data (no Redmine data).
+
 ## Open questions for Jan
 
-Still open (not in the answers of 2026-10-07); built as recommended, say so if you want otherwise.
-
-2. **Sudo mode for saving/enabling/disabling LDAP sync settings** (recommended, built, same as core
-   for LDAP authentication). Alternative: no password prompt.
-3. **DRY_RUN = real sync in a rolled-back transaction** (recommended, built). The output now shows
-   the real outcome ("[edavis] creating user", "5 groups added") instead of the old "!! Added to
-   groups" lines. Alternative: keep the stubs and fix them one by one (they missed writes and crashed).
-(Questions 1, 4 and 5 are decided, see above.)
+None.
 
 ## How to test
 

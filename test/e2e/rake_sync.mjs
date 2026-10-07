@@ -64,6 +64,19 @@ await t.shot('dynamic-group', 'User tweetsave: member of the dynamic group Tweet
 sup.rails("s = LdapSetting.find_by_auth_source_ldap_id(AuthSourceLdap.find_by(name: 'E2E LDAP').id); s.admin_group = ''; s.save or abort(s.errors.full_messages.join); puts :ok");
 // with an administrators group that loadgeek is not in
 sup.rails("s = LdapSetting.find_by_auth_source_ldap_id(AuthSourceLdap.find_by(name: 'E2E LDAP').id); s.admin_group = 'Rill'; s.save or abort(s.errors.full_messages.join); puts :ok");
+// DRY_RUN on existing data: reports what the real run below will do, changes nothing
+const adminBefore = sup.rails("puts User.find_by_login('loadgeek')&.admin?").split('\n').pop();
+const groupsBefore = sup.rails("puts User.find_by_login('loadgeek').groups.map(&:lastname).sort.join(',')").split('\n').pop();
+before = sup.counts();
+out = sup.rake('sync_all', { DRY_RUN: '1' }, 'rake_sync-dry_run-existing.txt');
+after = sup.counts();
+if (JSON.stringify(before) !== JSON.stringify(after)) t.problems.push(`DRY_RUN on existing data changed data: ${JSON.stringify(before)} -> ${JSON.stringify(after)}`);
+if (sup.rails("puts User.find_by_login('loadgeek')&.admin?").split('\n').pop() !== adminBefore) t.problems.push('DRY_RUN changed the admin flag of loadgeek');
+if (sup.rails("puts User.find_by_login('loadgeek').groups.map(&:lastname).sort.join(',')").split('\n').pop() !== groupsBefore) t.problems.push('DRY_RUN changed the groups of loadgeek');
+if (/\(exit [1-9]/.test(out) || !/revoked admin privileges/.test(out)) t.problems.push('DRY_RUN on existing data failed or did not report the admin change');
+await sup.showText(t.page, `DRY_RUN=1 rake sync_all on existing data (admin group Rill): loadgeek admin before ${adminBefore}, after ${sup.rails("puts User.find_by_login('loadgeek')&.admin?").split('\n').pop()}; counts ${JSON.stringify(before)} -> ${JSON.stringify(after)}`, out);
+await t.shot('dry-run-existing', 'DRY_RUN=1 rake sync_all on synced data with administrators group Rill: reports the admin flag it would revoke; admin flag, groups and counts unchanged');
+
 out = sup.rake('sync_all', { LOG_LEVEL: 'change' }, 'rake_sync-sync_all.txt');
 if (!/revoked admin privileges/.test(out)) t.problems.push('admin privilege not revoked on sync_all');
 if (sup.rails("puts User.find_by_login('loadgeek')&.admin?").split('\n').pop() !== 'false') t.problems.push('loadgeek still administrator');

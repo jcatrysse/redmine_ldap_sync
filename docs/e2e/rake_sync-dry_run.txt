@@ -33,20 +33,33 @@ Synchronizing 'E2E LDAP' users...
 -- Warning: User 'tweetsave' is missing account_flags attribute (description)
 -- Warning: User 'microunit' is missing account_flags attribute (description)
 -- Creating user 'LoadGeek' (Christián Earheart)...
+   !! Added to groups 'ldap.users'
 Could not create group 'LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam': "Name is too long (maximum is 255 characters)"
+   !! Added to groups 'Bluil', 'IT отдел Системные', 'Issekin', 'Therß', 'Iardum'
    -> 5 groups added (bluil, it отдел системные, issekin, therß, iardum) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
 -- Creating user 'edavis' (Eric Davis)...
+   !! Added to groups 'ldap.users'
+   !! Added to groups 'Smuaddan', 'Säyeldas', 'Briklør', 'Bluil', 'Enden'
    -> 5 groups added (smuaddan, säyeldas, briklør, bluil, enden)
 -- Creating user 'example1' (Example One)...
+   !! Added to groups 'ldap.users'
 -- Could not create user 'incomplete': "Email cannot be blank"
 -- Creating user 'microunit' (Elnora Gershon)...
+   !! Added to groups 'ldap.users'
 Could not create group 'LoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamLoremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam': "Name is too long (maximum is 255 characters)"
+   !! Added to groups 'Bluil', 'Enden', 'IT отдел Системные', 'Issekin', 'Therß', 'Iardum', 'Worathest', 'Briklør', 'MicroUsers'
    -> 9 groups added (bluil, enden, it отдел системные, issekin, therß, iardum, worathest, briklør, microusers) and 1 already created (loremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamloremipsumdolorsitametconsectetueradipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquamdipiscingelitseddiamnonummynibheuismodtinciduntutlaoreetdoloremagnaaliquam)
 -- Creating user 'rubycalm' (Fernando Stemm)...
+   !! Added to groups 'ldap.users'
+   !! Added to groups 'Příliš žluťoučký kůň úpěl ďábelské ódy', 'Rynever'
    -> 2 groups added (příliš žluťoučký kůň úpěl ďábelské ódy, rynever)
 -- Creating user 'systemhack' (Darryl Ditto)...
+   !! Added to groups 'ldap.users'
+   !! Added to groups 'Anbely', 'Säyeldas', 'Briklør', 'Bluil', 'Enden', 'Worathest'
    -> 6 groups added (anbely, säyeldas, briklør, bluil, enden, worathest)
 -- Creating user 'tweetsave' (Nelson Meriwether)...
+   !! Added to groups 'ldap.users'
+   !! Added to groups 'Anbely', 'Worathest', 'Briklør', 'Bluil', 'TweetUsers'
    -> 5 groups added (anbely, worathest, briklør, bluil, tweetusers)
 Synchronizing 'E2E LDAP down' users...
    -> Ldap sync is disabled: skipping
