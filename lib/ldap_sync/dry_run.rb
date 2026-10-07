@@ -16,20 +16,23 @@
 # You should have received a copy of the GNU General Public License
 # along with Redmine LDAP Sync.  If not, see <http://www.gnu.org/licenses/>.
 
-module LdapSync::DryRun::Group
-
-  module InstanceMethods
-    def find_or_create_by_lastname(lastname, attributes = {})
-      group = find_by_lastname(lastname)
-      return group if group.present?
-
-      group = ::Group.new(attributes.merge(:lastname => lastname))
-      puts "   !! New group '#{lastname}'" if group.valid?
-
-      group
-    end
+# DRY_RUN of the rake tasks: the stubs in DryRun::User and DryRun::Group
+# replace the writes of the sync and print what would be done. They are
+# prepended (User defines lock!/activate! itself, an included module never
+# reached them) and only act while the dry run is enabled.
+module LdapSync::DryRun
+  def self.enable!
+    ::User.prepend(User::InstanceMethods) unless ::User < User::InstanceMethods
+    ::User.singleton_class.prepend(User::ClassMethods) unless ::User.singleton_class < User::ClassMethods
+    ::Group.prepend(Group::InstanceMethods) unless ::Group < Group::InstanceMethods
+    @enabled = true
   end
 
-  # applied by LdapSync::DryRun.enable!
+  def self.disable!
+    @enabled = false
+  end
 
+  def self.enabled?
+    @enabled == true
+  end
 end

@@ -1,7 +1,9 @@
 # encoding: utf-8
 module LdapSync::DryRun::User
   module ClassMethods
-    def create(attributes)
+    def create(attributes = nil, &block)
+      return super unless LdapSync::DryRun.enabled?
+
       user = User.new(attributes)
       user.email_address ||= DryRunEmailAddress.new
       user.groups = DryRunGroupsProxy.new(user)
@@ -11,10 +13,25 @@ module LdapSync::DryRun::User
   end
 
   module InstanceMethods
-    def lock!; end
-    def activate!; end
+    def lock!
+      return super unless LdapSync::DryRun.enabled?
+
+      puts "   !! Locked user '#{login}'"
+      true
+    end
+
+    def activate!
+      return super unless LdapSync::DryRun.enabled?
+
+      puts "   !! Activated user '#{login}'"
+      true
+    end
+
     def update_attributes(attrs = {}); end
-    def save(*args); end
+
+    def save(*args, **options, &block)
+      return super unless LdapSync::DryRun.enabled?
+    end
   end
 
   class DryRunEmailAddress
@@ -41,13 +58,5 @@ module LdapSync::DryRun::User
     end
   end
 
-  def self.included(receiver)
-    receiver.extend(ClassMethods)
-    receiver.include(InstanceMethods)
-
-    # vermijd dubbele HABTM-definities
-    unless receiver.reflect_on_association(:groups)
-      receiver.has_and_belongs_to_many :groups
-    end
-  end
+  # applied by LdapSync::DryRun.enable!
 end

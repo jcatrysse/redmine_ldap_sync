@@ -1022,4 +1022,33 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_nil klass.try_to_login!('loadgeek', 'password')
     assert_equal 1, klass.singleton_class.ancestors.count(LdapSync::Infectors::User::ClassMethods)
   end
+
+  test "DRY_RUN should not lock users who are locked on LDAP" do
+    @ldap_setting.fixed_group = nil
+    @ldap_setting.account_flags = 'description'
+    @ldap_setting.account_locked_test = 'true'
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    assert User.find_by_login('loadgeek').active?
+
+    output = dry_run { @auth_source.sync_users }
+
+    assert User.find_by_login('loadgeek').active?, 'loadgeek must stay active in a dry run'
+    assert_include "!! Locked user 'loadgeek'", output
+    assert_include "Locked active user 'loadgeek'", output
+  end
+
+  private
+
+  # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed
+  def dry_run
+    AuthSourceLdap.running_rake!
+    AuthSourceLdap.trace_level = :debug
+    LdapSync::DryRun.enable!
+    old_stdout, $stdout = $stdout, StringIO.new
+    yield
+    $stdout.string
+  ensure
+    $stdout = old_stdout if old_stdout
+    LdapSync::DryRun.disable!
+  end
 end

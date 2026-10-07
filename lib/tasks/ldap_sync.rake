@@ -58,8 +58,7 @@ namespace :redmine do
         unless ENV['DRY_RUN'].nil?
           trace "\n!!! Dry-run execution !!!\n"
 
-          User.send :include, LdapSync::DryRun::User
-          Group.send :include, LdapSync::DryRun::Group
+          LdapSync::DryRun.enable!
         end
       end
     end
