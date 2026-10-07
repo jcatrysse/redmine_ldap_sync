@@ -27,6 +27,14 @@ module LdapSync::DryRun::User
       true
     end
 
+    # archive! removes all groups and roles and locks the account
+    def archive!
+      return super unless LdapSync::DryRun.enabled?
+
+      puts "   !! Archived user '#{login}'"
+      true
+    end
+
     def update_attributes(attrs = {}); end
 
     def save(*args, **options, &block)

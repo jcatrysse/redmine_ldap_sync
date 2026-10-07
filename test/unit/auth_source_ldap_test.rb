@@ -1037,6 +1037,24 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include "Locked active user 'loadgeek'", output
   end
 
+  test "DRY_RUN should report the archiving of users deleted on LDAP without archiving them" do
+    @ldap_setting.fixed_group = nil
+    @ldap_setting.create_users = false
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    someone = User.find_by_login('someone')
+    groups, roles = someone.groups.count, MemberRole.where(:member_id => someone.memberships.select(:id)).count
+    assert_operator groups, :>, 0
+    assert_operator roles, :>, 0
+
+    output = dry_run { @auth_source.sync_users }
+
+    someone.reload
+    assert someone.active?, 'someone must stay active in a dry run'
+    assert_equal groups, someone.groups.count
+    assert_equal roles, MemberRole.where(:member_id => someone.memberships.select(:id)).count
+    assert_include "!! Archived user 'someone'", output
+  end
+
   private
 
   # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed
