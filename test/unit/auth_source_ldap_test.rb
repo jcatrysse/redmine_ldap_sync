@@ -354,6 +354,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
 
     assert_include '-- Updating user \'loadgeek\' (User Misc)...', actual
     assert_include '-> 6 groups added', actual
+    assert_no_match /Group closure on parents|Something inside|Net::LDAP::Entry/, actual
   end
 
   test "#sync_users script output should be silent when running on rake with level :silent" do

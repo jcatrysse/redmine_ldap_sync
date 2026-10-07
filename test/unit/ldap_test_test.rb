@@ -39,7 +39,7 @@ class LdapTestTest < ActiveSupport::TestCase
     @ldap_test.run_with_users_and_groups([], [])
     assert_not_equal 0, @ldap_test.non_dynamic_groups.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_one_or_more_users
@@ -57,7 +57,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_equal 5, @ldap_test.users_at_ldap['tweetmicro'][:fields].size, "#{@ldap_test.users_at_ldap['tweetmicro'][:fields]}"
     assert_equal 0, @ldap_test.groups_at_ldap.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_one_or_more_groups
@@ -74,7 +74,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_equal 1, @ldap_test.groups_at_ldap['Therß'][:fields].size
     assert_equal 0, @ldap_test.users_at_ldap.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_users_and_groups
@@ -82,7 +82,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_equal 2, @ldap_test.users_at_ldap.size
     assert_equal 3, @ldap_test.groups_at_ldap.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_no_group_fields_and_user_fields
@@ -95,7 +95,7 @@ class LdapTestTest < ActiveSupport::TestCase
     # uid is required and should be set with the default value
     assert_equal 4, @ldap_test.users_at_ldap['tweetsave'][:fields].size, "#{@ldap_test.users_at_ldap['tweetsave'][:fields]}"
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_deleted_users
@@ -103,7 +103,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_not_equal 0, @ldap_test.user_changes[:locked].size
     assert_not_equal 0, @ldap_test.user_changes[:deleted].size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_admin_group
@@ -112,7 +112,7 @@ class LdapTestTest < ActiveSupport::TestCase
     @ldap_test.run_with_users_and_groups(['tweetsave'], ['Therß'])
     assert_not_equal 0, @ldap_test.admin_users.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_required_group
@@ -121,7 +121,7 @@ class LdapTestTest < ActiveSupport::TestCase
     @ldap_test.run_with_users_and_groups(['tweetsave'], ['Therß'])
     assert_not_equal 0, @ldap_test.users_locked_by_group.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_dynamic_groups
@@ -131,7 +131,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_include 'MicroUsers', @ldap_test.users_at_ldap['microunit'][:groups][:added]
     assert_not_equal 0, @ldap_test.dynamic_groups.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_with_minimal_settings
@@ -156,7 +156,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_equal 0, @ldap_test.users_locked_by_group.size
     assert_equal 0, @ldap_test.admin_users.size
 
-    assert_no_match /ldap_test\.rb/, @ldap_test.messages, "Should not throw an error"
+    assert_nil @ldap_test.exception, "Should not throw an error"
   end
 
   def test_run_without_groups_base_dn_should_fail_on_open_ldap
@@ -167,7 +167,9 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_equal 0, @ldap_test.non_dynamic_groups.size
     assert_equal 0, @ldap_test.dynamic_groups.size
 
-    assert_match /ldap_test\.rb/, @ldap_test.messages, "Should throw an error"
+    assert_kind_of Net::LDAP::Error, @ldap_test.exception, "Should throw an error"
+    assert_match /^Net::LDAP::Error: LDAP Error\(32\): No Such Object$/, @ldap_test.messages
+    assert_no_match /:\d+:in [`']/, @ldap_test.messages, "No backtrace in the test result"
   end
 
   def test_run_with_dynamic_bind_should_not_fail
@@ -182,7 +184,7 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_not_equal 15, ldap_test.messages.size
     assert_equal 15, ldap_test.non_dynamic_groups.size
 
-    assert_no_match /ldap_test\.rb/, ldap_test.messages, "Should no throw an error"
+    assert_nil ldap_test.exception, "Should no throw an error"
   end
 
   def test_log_messages
@@ -195,7 +197,9 @@ class LdapTestTest < ActiveSupport::TestCase
 
     @ldap_test.run_with_users_and_groups([], [])
 
-    assert_match /ldap_test\.rb/, @ldap_test.messages, "Should throw an error"
+    assert_kind_of SyntaxError, @ldap_test.exception, "Should throw an error"
+    assert_match /^SyntaxError: /, @ldap_test.messages
+    assert_no_match /:\d+:in [`']/, @ldap_test.messages, "No backtrace in the test result"
   end
 
   def test_should_filter_the_list_of_groups_with_the_groupname_pattern
@@ -208,4 +212,13 @@ class LdapTestTest < ActiveSupport::TestCase
     assert_include 'Säyeldas', @ldap_test.non_dynamic_groups
   end
 
+  def test_run_with_nested_groups_should_not_log_debug_output
+    @ldap_setting.nested_groups = 'on_parents'
+
+    @ldap_test.run_with_users_and_groups(['loadgeek'], [])
+
+    assert_nil @ldap_test.exception
+    assert_include 'Therß', @ldap_test.users_at_ldap['loadgeek'][:groups][:added].to_a
+    assert_no_match /Group closure on parents|Something inside|Net::LDAP::Entry/, @ldap_test.messages
+  end
 end

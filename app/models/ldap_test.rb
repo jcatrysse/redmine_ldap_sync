@@ -23,6 +23,7 @@ class LdapTest
   extend ActiveModel::Naming
 
   attr_accessor :setting, :bind_user, :bind_password, :test_users, :test_groups, :messages, :user_attrs, :group_attrs, :users_at_ldap, :groups_at_ldap, :non_dynamic_groups, :dynamic_groups, :users_locked_by_group, :admin_users, :user_changes
+  attr_reader :exception
 
   delegate :auth_source_ldap, :to => :setting
   delegate :users, :to => :auth_source_ldap
@@ -99,7 +100,10 @@ class LdapTest
       end
     end
   rescue Exception => e
-    error(e.message + e.backtrace.join("\n  "))
+    # the message for the administrator, the backtrace only in the log
+    @exception = e
+    Rails.logger.error "LDAP sync test failed: #{e.class}: #{e.message}\n  #{Array(e.backtrace).join("\n  ")}"
+    error("#{e.class}: #{e.message}")
   end
 
   def self.human_attribute_name(attr, *args)

@@ -245,17 +245,7 @@ module LdapSync::EntityManager
         group = find_group(ldap, groupname, ns(:groupname, :group_memberid)) if group.is_a? String
 
         member_filter = Net::LDAP::Filter.eq( setting.member_group, group[n(:group_memberid)].first )
-        #          cacheable_ber find_all_groups(ldap, member_filter, ns(:groupname, :group_memberid)).map
-        trace "Group closure on parents"
-        all_groups = find_all_groups(ldap, member_filter, ns(:groupname, :group_memberid))
-        if all_groups.nil?
-          trace "Empty group"
-          Array.new
-        else
-          group_map = all_groups.map
-          trace "Something inside #{all_groups}"
-          all_groups
-        end
+        find_all_groups(ldap, member_filter, ns(:groupname, :group_memberid)) || Array.new
       end
     end
 
