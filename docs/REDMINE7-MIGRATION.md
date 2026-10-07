@@ -61,6 +61,7 @@ Done in the migration session (2026-10-06), one concern per commit, each with a 
 | `b9f2447` | DRY_RUN fix 3: group memberships of existing users (reporting proxy, `member_of_group?`; proxy `<<`/`delete` with several groups) |
 | `95676af` | DRY_RUN fix 4: `save` validates instead of nil: no crash on new users, report "Creating user" / real errors |
 | `2bf8745` | DRY_RUN fix 5: `Group#save` stubbed: no groups and group fields created/updated |
+| (fix 6) | DRY_RUN: `update_attributes` stub guarded (OpenAI review); reviews docs/reviews/openai-2026-10-07-dde4071.md and -498cf05.md, all findings resolved |
 
 ## Work list for the migration session
 
