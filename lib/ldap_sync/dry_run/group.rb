@@ -19,6 +19,13 @@
 module LdapSync::DryRun::Group
 
   module InstanceMethods
+    # validates as a real save would, writes nothing (new groups, synced fields)
+    def save(*args, **options, &block)
+      return super unless LdapSync::DryRun.enabled?
+
+      options[:validate] == false || valid?
+    end
+
     def find_or_create_by_lastname(lastname, attributes = {})
       group = find_by_lastname(lastname)
       return group if group.present?
