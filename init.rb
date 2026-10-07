@@ -8,15 +8,15 @@ Redmine::Plugin.register :redmine_ldap_sync do
   description 'Syncs users and groups with LDAP'
   url         'https://github.com/eea/redmine_ldap_sync'
   version     '2.4.0'
-  requires_redmine version_or_higher: '2.1.0'
+  requires_redmine version_or_higher: '7.0.0'
 
   settings default: HashWithIndifferentAccess.new
   menu :admin_menu,
        :ldap_sync,
        { controller: 'ldap_settings', action: 'index' },
        caption: :label_ldap_synchronization,
-       icon:    'reload', # Redmine 6+ (SVG icon), ignored before
-       html:    { class: Redmine::VERSION::MAJOR >= 6 ? 'icon' : 'icon icon-ldap-sync' }
+       icon:    'reload',
+       html:    { class: 'icon icon-ldap-sync' }
 end
 
 # --------------------------------------------------

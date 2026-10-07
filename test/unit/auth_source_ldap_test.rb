@@ -964,11 +964,7 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     AuthSourceLdap.trace_level = :change
 
     old_stdout, $stdout = $stdout, StringIO.new
-    if ActiveSupport.respond_to?(:deprecator)
-      assert_not_deprecated(ActiveSupport.deprecator) { @auth_source.sync_groups; @auth_source.sync_users }
-    else
-      assert_not_deprecated { @auth_source.sync_groups; @auth_source.sync_users }
-    end
+    assert_not_deprecated(ActiveSupport.deprecator) { @auth_source.sync_groups; @auth_source.sync_users }
     actual, $stdout = $stdout.string, old_stdout
 
     assert_include '1 deleted (rynever)', actual

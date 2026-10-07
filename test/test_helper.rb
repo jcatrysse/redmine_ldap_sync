@@ -35,11 +35,7 @@ require File.expand_path(File.dirname(__FILE__) + '/../../../test/test_helper')
 Rails.backtrace_cleaner.remove_silencers!
 
 class ActiveSupport::TestCase
-  if respond_to?(:fixture_paths=)
-    self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
-  else
-    self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
-  end
+  self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
   # Redmine's test_helper declares `fixtures :all` for its own fixture directory;
   # with the path above those sets do not exist, so only the sets each test
   # declares are loaded.
@@ -51,11 +47,7 @@ class ActiveSupport::TestCase
 end
 
 class ActionDispatch::IntegrationTest
-  if respond_to?(:fixture_paths=)
-    self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
-  else
-    self.fixture_path = File.expand_path(File.dirname(__FILE__) + '/fixtures')
-  end
+  self.fixture_paths = [File.expand_path(File.dirname(__FILE__) + '/fixtures')]
 end
 
 module ActionController::TestCase::Behavior

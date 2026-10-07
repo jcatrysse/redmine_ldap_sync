@@ -90,12 +90,7 @@ class LdapSettingsHelperTest < ActionView::TestCase
     link = change_status_link(@ldap_setting)
     assert_match %r{href="/admin/ldap_sync/1/disable"}, link
     assert_include l(:button_disable), link
-    if respond_to?(:sprite_icon)
-      assert_match /<svg[^>]*>.*#icon--circle-minus/m, link
-      assert_include 'class="icon"', link
-    else
-      assert_no_match /<svg/, link
-      assert_include 'class="icon icon-disable"', link
-    end
+    assert_match /<svg[^>]*>.*#icon--circle-minus/m, link
+    assert_include 'class="icon icon-disable"', link
   end
 end
