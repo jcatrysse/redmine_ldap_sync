@@ -35,7 +35,9 @@ module LdapSync::DryRun::User
       true
     end
 
-    def update_attributes(attrs = {}); end
+    def update_attributes(attrs = {})
+      return super unless LdapSync::DryRun.enabled?
+    end
 
     # group changes are printed and kept in memory only
     def groups

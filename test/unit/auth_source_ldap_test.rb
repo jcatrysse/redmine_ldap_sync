@@ -1107,6 +1107,17 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include "granted admin privileges: member of group 'Iardum'", output
   end
 
+  test "DRY_RUN stubs should only act while the dry run is enabled" do
+    LdapSync::DryRun.enable!
+    LdapSync::DryRun.disable!
+    user = User.find_by_login('loadgeek')
+
+    # gone in Rails 6.1: outside a dry run the stub must not hide that
+    assert_raises(NoMethodError) { user.update_attributes(:firstname => 'Dry') }
+    assert user.lock!
+    assert user.reload.locked?
+  end
+
   private
 
   # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed
