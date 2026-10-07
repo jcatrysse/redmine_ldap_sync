@@ -1095,6 +1095,18 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_match /!! Added to groups '.*Smuaddan/, output
   end
 
+  test "DRY_RUN should report admin privilege changes without granting them" do
+    @ldap_setting.admin_group = 'Iardum'
+    @ldap_setting.create_users = false
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    assert !User.find_by_login('loadgeek').admin?
+
+    output = dry_run { @auth_source.sync_users }
+
+    assert !User.find_by_login('loadgeek').admin?, 'loadgeek must not become administrator in a dry run'
+    assert_include "granted admin privileges: member of group 'Iardum'", output
+  end
+
   private
 
   # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed
