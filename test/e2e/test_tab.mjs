@@ -31,7 +31,8 @@ for (const expected of ['User "loadgeek"', 'Therß', 'Users enabled', 'Users loc
   if (!result.includes(expected)) t.problems.push(`test result lacks "${expected}"`);
 }
 if (!/nobody/.test(result)) t.problems.push('test result does not mention the unknown user');
-await t.shot('result', 'Result: the attributes and groups of loadgeek, tweetmicro locked by its flag, the unknown user and group reported, group lists incl. dynamic groups');
+if (/Group closure on parents|Something inside|Net::LDAP::Entry/.test(result)) t.problems.push('debug lines in the test result');
+await t.shot('result', 'Result: the attributes and groups of loadgeek, tweetmicro locked by its flag, the unknown user and group reported, group lists incl. dynamic groups; log messages without debug lines');
 
 // a change in the form is tested without being saved
 await t.page.click('#tab-LdapSettings');
@@ -59,6 +60,7 @@ await t.page.click('#tab-Test');
 result = await runTest('someone', '');
 t.check('run test against a server that is down');
 if (!/refused|Connection|LDAP Error|Errno/i.test(result)) t.problems.push(`no connection error for the server that is down: ${result.slice(0, 200)}`);
-await t.shot('server-down', 'E2E LDAP down (nothing listens on port 3390) with the "Open LDAP (with posixGroups)" preset: the test shows the connection error');
+if (/:\d+:in [`']/.test(result)) t.problems.push('backtrace in the test result');
+await t.shot('server-down', 'E2E LDAP down (nothing listens on port 3390) with the "Open LDAP (with posixGroups)" preset: the test shows the connection error as one line, no backtrace');
 
 await t.done();
