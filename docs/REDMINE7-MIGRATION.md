@@ -23,7 +23,7 @@ what is left. Written 2026-10-06 from a measured analysis (report at the bottom)
 | After sync | n.v.t. |
 | Complexity (1 trivial .. 5 rewrite) | 2 |
 | Measured on | Redmine 7.0.1 (7.0-stable-GEOxyz + latest 7.0-stable), Rails 8.1.3.1, Ruby 3.3.6, PostgreSQL 16 and MariaDB 10.11 |
-| Branch head when this file was written | `a695b45`; migration done up to `eeb58a2` + this update (2026-10-06) |
+| Branch head when this file was written | `a695b45`; migration done up to `eeb58a2` (2026-10-06); Jan's decisions built up to `f67cd72` (2026-10-07) |
 
 ## Already on this branch
 
@@ -52,6 +52,9 @@ Done in the migration session (2026-10-06), one concern per commit, each with a 
 | `8cb716e` | Test tab: two PUTs per click (rails-ujs + GEOxyz handler), Dutch hard-coded error text |
 | `3c2235c` | **Bug in production**: sync on login hooked `try_to_login`, the login form calls `try_to_login!`: web logins never synced (groups, fields, locks) |
 | `75e0327`, `b6c66ab` | E2E scenarios, screenshots, MariaDB run, before pictures on 5.1 |
+| `88b1add` | Jan q3: no debug lines in Test tab / rake output, error as one line, backtrace only in the log |
+| `39379f8` | Jan (general): `User.try_to_login!` patched with `prepend` instead of `alias_method` |
+| `f67cd72` | Jan (general): Redmine 7 only, 5.1 fallbacks removed, requires_redmine 7.0.0 |
 
 ## Work list for the migration session
 
@@ -102,6 +105,34 @@ Actions the person doing the upgrade must take, or know about, for this plugin:
 - No schema change; the 14 plugin migrations only touch settings (down/up verified).
 - Test against the real AD on staging: sync_all, login with sync on login, nested and dynamic groups,
   proxyAddresses fallback for users without `mail`. Not possible here (no AD).
+- Sync on login stays on (Jan q2, 2026-10-07: "Aan laten, eerst nakijken op staging"): on staging,
+  check "Synchronize on login", "Users must be members of" and the account flags with a few real
+  AD accounts (one in the required group, one not, one disabled in AD) before the upgrade.
+- Error details of the Test tab are in the Rails log now ("LDAP sync test failed: ..."), no longer on
+  the page.
+
+## Results after Jan's decisions (2026-10-07)
+
+PostgreSQL 16 only, Redmine 7.0.1 (`7.0-stable-GEOxyz`), test slapd 2.4.
+
+| run | result |
+|---|---|
+| plugin tests, plugin alone | 157 runs, 700 assertions, 0 failures, 0 errors, 0 skips |
+| plugin tests with 37 other GEOxyz plugins (`redmine70-migration` of each: 30 public, 7 private) | 157 runs, 700 assertions, 0 failures, 0 errors, 0 skips |
+| e2e, plugin alone (docs/e2e) | 9 scripts, 76 screenshots, 0 problems |
+| e2e with 35 other GEOxyz plugins (docs/e2e/together) | all 7 scenarios of this plugin 0 problems; 6 problems from other plugins, below |
+
+**Together with the other GEOxyz plugins** (findings for those plugins, none involves this one):
+- `redmine_issue_field_visibility` (alias_method on `IssueQuery#initialize_available_filters`) with
+  `redmine_agile` (prepend): SystemStackError, `rake redmine:load_default_data` aborts. Left out of the run.
+- `redmine_tint_issues` (alias_method on `Issue#css_classes`) with `redmine_agile` (prepend):
+  SystemStackError, HTTP 500 on the issue list, issue page and My page. Left out of the run.
+- `redmine_mail_digest` (alias_method `project_settings_tabs_with_issue_digest`) among the prepends
+  of ~13 plugins: Project > Settings HTTP 500 ("super: no superclass method project_settings_tabs").
+- `redmine_view_issue_description`: issue page 403 for roles without its permission (reporter,
+  outsider): by design of that plugin.
+- This plugin's own patch of `User.try_to_login!` is prepended now (`39379f8`): logins of local and
+  LDAP users work with all of them installed (login_sync, core_pages).
 
 ## Results (2026-10-06)
 
@@ -157,14 +188,13 @@ docs/reviews/openai-2026-10-06-cdbcf5f.md (1 finding, rejected with e2e evidence
 | DRY_RUN (no changes) | `DRY_RUN=1` | rake_sync.mjs + unit test | rake_sync-dry-run |
 | ACTIVATE_USERS | `ACTIVATE_USERS=1` | unit tests (activate_users flag) | - |
 | Stylesheet hook (view_layouts_base_html_head) | every page | smoke (no missing assets) | smoke-* |
+| Login and core pages with the plugin (and the other GEOxyz plugins) installed: Project > Settings, issue list, issue page, private project | admin, manager, reporter, outsider | core_pages.mjs | core_pages-* |
+| Test tab output without debug lines / backtrace (Jan q3) | Test tab | test_tab.mjs | test_tab-result, test_tab-server-down |
 | Webhooks | n/a, see work list 6 | - | - |
 
 ## Findings recorded, not changed (upstream behaviour)
 
-- Test tab and rake output at the default log level contain debug lines from upstream 2b83c5a
-  ("Group closure on parents", "Something inside [#<Net::LDAP::Entry ...>]") and, on an LDAP error,
-  a full Ruby backtrace with server paths (admin only; a unit test expects the backtrace).
-  `LOG_LEVEL=change` hides the debug lines. See open question 5.
+- ~~Debug lines and backtrace in the Test tab / rake output~~: removed by Jan's decision q3 (`88b1add`).
 - "Validation errors on the ldap settings:" / "on the test:" in the .text.erb views are not translated.
 - The bind password on the Test tab is a text field (shown in clear).
 - `account_locked_test` is Ruby code evaluated by the plugin (admin-only setting, by design).
@@ -176,26 +206,46 @@ docs/reviews/openai-2026-10-06-cdbcf5f.md (1 finding, rejected with e2e evidence
   the sync reports it and goes on.
 - A dry run refreshes the LDAP caches in tmp/ldap_cache with current LDAP data (no Redmine data).
 
+## Decided by Jan (2026-10-07)
+
+Final; answered by Jan in the coordinating session (docs/DECISIONS-2026-10-07.md).
+
+General, for every GEOxyz plugin:
+- GEOxyz goes straight to Redmine 7: no backports to 5.1; `redmine70-migration` is what goes live.
+  Redmine 5.1 compatibility is no longer a requirement, no code paths that exist only for 5.1.
+  Built: `f67cd72` (icon fallbacks, PNGs, pre-6.1/7.1 branches removed; requires_redmine 7.0.0).
+- PostgreSQL 16 only: tests and e2e on PostgreSQL; MariaDB runs no longer required (the MariaDB
+  results above are kept as information). SQL stays portable where that costs nothing.
+- deface without version constraint: not applicable (this plugin does not use deface).
+- A core method that other plugins also patch is patched with `prepend`, never `alias_method`.
+  This plugin aliased `User.try_to_login!`; built: `39379f8` (prepend, with a test).
+- GitHub Actions stay manual only (`workflow_dispatch`): unchanged.
+
+For this plugin:
+1. **redmine_ldap_sync-q1** (open question 1): "Mag de plugin bij bestaande gebruikers nog
+   mailadres en naam invullen als LDAP ze niet heeft?" Jan chose A: "Alleen bij nieuwe gebruikers"
+   (Lokaal aangepaste adressen en namen blijven staan, en het registratieformulier voor onvolledige
+   gebruikers werkt weer.). Already built in `6d82840`; kept.
+2. **redmine_ldap_sync-q2** (open question 4): "Synchronisatie bij het aanmelden werkt nu echt. Aan
+   laten of uitzetten?" Jan chose A: "Aan laten, eerst nakijken op staging" (De instelling doet wat
+   ze belooft; wie niet in de verplichte groep zit of in AD is uitgeschakeld, kan niet meer
+   aanmelden.). Already built in `3c2235c` (now prepended, `39379f8`); kept. Staging check under
+   "After the upgrade".
+3. **redmine_ldap_sync-q3** (open question 5): "De debugregels en technische foutmeldingen uit de
+   Test-tab en de synchronisatie-uitvoer halen?" Jan chose A: "Ja, in een kleine opvolging"
+   (Leesbaardere uitvoer; één test moet dan op de foutmelding zelf controleren in plaats van op de
+   bestandsnaam.). Built in `88b1add`.
+
 ## Open questions for Jan
 
-Built as recommended; say so if you want otherwise.
+Still open (not in the answers of 2026-10-07); built as recommended, say so if you want otherwise.
 
-1. **GEOxyz #5245 fallbacks only when the sync creates a user** (recommended, built). Alternative:
-   on every sync as before, which overwrote locally maintained mail addresses and names whenever LDAP
-   had none and broke the "incomplete user" registration. If GEOxyz relies on the login (UPN) being
-   copied into mail for existing users, say so.
 2. **Sudo mode for saving/enabling/disabling LDAP sync settings** (recommended, built, same as core
    for LDAP authentication). Alternative: no password prompt.
 3. **DRY_RUN = real sync in a rolled-back transaction** (recommended, built). The output now shows
    the real outcome ("[edavis] creating user", "5 groups added") instead of the old "!! Added to
    groups" lines. Alternative: keep the stubs and fix them one by one (they missed writes and crashed).
-4. **Sync on login for web logins** now works (it never ran on the login form). Recommended: keep;
-   it is what the setting says. Check "Synchronize on login", "Users must be members of" and the
-   account flags on staging first. Alternative: set "Synchronize on login" to disabled to keep today's
-   behaviour.
-5. Remove the upstream debug lines and the backtrace from the Test tab / rake output? Recommended:
-   yes, in a small follow-up (one test has to change from "contains ldap_test.rb" to "contains the
-   error message").
+(Questions 1, 4 and 5 are decided, see above.)
 
 ## How to test
 
@@ -229,7 +279,7 @@ results quoted in the analysis come from it.
 1. **Start**: `git fetch && git checkout redmine70-migration && git pull`. Read this whole file,
    including the analysis report at the bottom. Do not reopen decisions recorded here.
 2. **Baseline, before you change anything**:
-   - the plugin's tests on Redmine 7.0-stable-GEOxyz with PostgreSQL and with MariaDB;
+   - the plugin's tests on Redmine 7.0-stable-GEOxyz with PostgreSQL;
    - a real running Redmine with this plugin (`./.codex/start_server.sh`) and the browser run
      (`./.codex/e2e.sh`: smoke over every page the plugin adds, plus the core issue flows).
    Write the numbers here. Something already broken now is a finding, not your regression.
@@ -241,9 +291,8 @@ results quoted in the analysis come from it.
 4. **GEOxyz changes**: go through the table above, one item at a time. Each kept or re-made change
    is its own commit with a test that proves it. Record the verdict in the table.
 5. **Work list**: then the numbered list, in order. One concern per commit.
-6. **Portability**: everything must run on Redmine's supported databases (PostgreSQL,
-   MySQL/MariaDB; SQLite where the plugin already supports it). Migrations must be reversible and
-   are run down and up on PostgreSQL and MariaDB.
+6. **Portability**: PostgreSQL 16 (Jan, 2026-10-07: GEOxyz runs PostgreSQL only); keep SQL
+   portable where it costs nothing. Migrations must be reversible and are run down and up.
 7. **Together**: run with the other GEOxyz plugins installed (the migration kit's harness, or
    `RMP_EXTRA_PLUGINS`). A failure that only appears in combination is a finding to record here.
 8. **End to end, visually, every function**: on the real Redmine from `start_server.sh`
@@ -261,8 +310,7 @@ results quoted in the analysis come from it.
      them against the same running instance (mails land in `redmine/tmp/mails`, `t.mails()`
      reads them; API through `t.page.request`) and record command and result.
    - Before pictures where behaviour or layout changes: the branch GEOxyz runs today, on
-     Redmine 5.1, same scenarios, `RMP_E2E_OUT=docs/e2e/before`.
-   - Run the whole e2e set once on MariaDB as well (`RMP_DB=mariadb`, then `start_server.sh --reset`).
+     Redmine 5.1, same scenarios, `RMP_E2E_OUT=docs/e2e/before` (for comparison only; 5.1 is not a target).
 9. **Independent review**: first your own, adversarial: re-read the whole diff as if someone
    else wrote it and you are paid to reject it. Then, **when `OPENAI_API_KEY` is set in the
    session**, `./.codex/openai_review.sh`: it sends the diff of this branch to an OpenAI model
@@ -307,8 +355,11 @@ results quoted in the analysis come from it.
   (on by default: `t.sudo()` in a scenario). The breaker list is in the migration kit's CHECKLIST.md.
 - **Locales**: keep the locales the plugin ships in sync; translate a new key by matching the
   closest existing key in the same file, not from scratch; do not add new languages.
-- **5.1 compatibility**: prefer fixes that also run on Redmine 5.1 so they can be merged early;
-  say so when a fix cannot.
+- **Redmine 7 only** (Jan, 2026-10-07): no 5.1 compatibility, no backports, no code paths that
+  exist only for 5.1.
+- **PostgreSQL only** (Jan, 2026-10-07): tests and e2e on PostgreSQL 16; keep SQL portable where it
+  costs nothing; a MariaDB-only problem is a note here, not a blocker.
+- **prepend, not alias_method** (Jan, 2026-10-07) for core methods that other plugins patch too.
 - **Git**: work on `redmine70-migration` only; never push to the default branch; never force-push
   a branch someone else uses. Descriptive commit messages (what and why). Push after every
   commit, together with the updated status in this file: a cloud session can stop at a usage
@@ -319,7 +370,7 @@ results quoted in the analysis come from it.
 ## Definition of done
 
 - All items of the work list are done or explicitly deferred with a reason, in this file.
-- The plugin's tests are green on Redmine 7.0-stable-GEOxyz with PostgreSQL and MariaDB
+- The plugin's tests are green on Redmine 7.0-stable-GEOxyz with PostgreSQL
   (numbers in this file); boot, production-like eager load, migrations up/down OK.
 - Every function in the inventory exercised end to end on a real running Redmine, with and
   without permissions and on its failure paths; `./.codex/e2e.sh` green; screenshots looked at,
