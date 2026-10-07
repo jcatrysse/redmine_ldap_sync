@@ -50,8 +50,11 @@ module LdapSync::DryRun::User
       groups.any? {|g| g.lastname == groupname }
     end
 
+    # validates as a real save would, writes nothing
     def save(*args, **options, &block)
       return super unless LdapSync::DryRun.enabled?
+
+      options[:validate] == false || valid?
     end
   end
 

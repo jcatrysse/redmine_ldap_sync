@@ -1068,6 +1068,19 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include "!! Removed from groups 'rynever'", output
   end
 
+  test "DRY_RUN should report the users it would create without creating them" do
+    @ldap_setting.fixed_group = nil
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+
+    output = nil
+    assert_no_difference 'User.count' do
+      output = dry_run { @auth_source.sync_users }
+    end
+
+    assert_include "-- Creating user 'edavis' (Eric Davis)...", output
+    assert_include "-- Could not create user 'incomplete'", output
+  end
+
   private
 
   # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed
