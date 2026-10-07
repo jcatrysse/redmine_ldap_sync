@@ -1055,6 +1055,19 @@ class AuthSourceLdapTest < ActiveSupport::TestCase
     assert_include "!! Archived user 'someone'", output
   end
 
+  test "DRY_RUN should report group changes of existing users without changing them" do
+    @ldap_setting.fixed_group = nil
+    @ldap_setting.create_users = false
+    assert @ldap_setting.save, @ldap_setting.errors.full_messages.join(', ')
+    before = User.find_by_login('loadgeek').groups.map(&:lastname).sort
+
+    output = dry_run { @auth_source.sync_users }
+
+    assert_equal before, User.find_by_login('loadgeek').reload.groups.map(&:lastname).sort
+    assert_match /!! Added to groups '.*Iardum/, output
+    assert_include "!! Removed from groups 'rynever'", output
+  end
+
   private
 
   # Runs the block as the rake tasks do with DRY_RUN set and returns what it printed

@@ -37,6 +37,19 @@ module LdapSync::DryRun::User
 
     def update_attributes(attrs = {}); end
 
+    # group changes are printed and kept in memory only
+    def groups
+      return super unless LdapSync::DryRun.enabled?
+
+      @dry_run_groups ||= DryRunGroupsProxy.new(self).concat(super.to_a)
+    end
+
+    def member_of_group?(groupname)
+      return super unless LdapSync::DryRun.enabled?
+
+      groups.any? {|g| g.lastname == groupname }
+    end
+
     def save(*args, **options, &block)
       return super unless LdapSync::DryRun.enabled?
     end
@@ -56,13 +69,13 @@ module LdapSync::DryRun::User
     def <<(groups)
       names = Array(groups).map(&:lastname)
       puts "   !! Added to groups '#{names.join("', '")}'" unless names.empty?
-      super(groups)
+      concat(Array(groups))
     end
 
     def delete(*groups)
-      names = Array(groups).map(&:lastname)
+      names = groups.flatten.map(&:lastname)
       puts "   !! Removed from groups '#{names.join("', '")}'" unless names.empty?
-      super(*groups)
+      groups.flatten.each {|g| super(g) }
     end
   end
 
