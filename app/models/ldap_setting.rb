@@ -351,8 +351,8 @@ class LdapSetting
     end
 
     def strip_names
-      LDAP_ATTRIBUTES.each {|a| @attributes[a].strip! unless @attributes[a].nil? }
-      CLASS_NAMES.each {|a| @attributes[a].strip! unless @attributes[a].nil? }
+      LDAP_ATTRIBUTES.each {|a| @attributes[a] = @attributes[a].strip unless @attributes[a].nil? }
+      CLASS_NAMES.each {|a| @attributes[a] = @attributes[a].strip unless @attributes[a].nil? }
     end
 
     def attributes

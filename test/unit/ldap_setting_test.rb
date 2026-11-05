@@ -69,6 +69,18 @@ class LdapSettingTest < ActiveSupport::TestCase
     assert_match /\A[^ ]+\z/, @ldap_setting.user_groups
   end
 
+  def test_should_strip_frozen_ldap_attributes_without_mutating_them
+    groupname = ' cn '.freeze
+    class_user = ' user '.freeze
+    @ldap_setting.safe_attributes = {'groupname' => groupname, 'class_user' => class_user}
+    assert @ldap_setting.save
+    assert_equal ' cn ', groupname
+    assert_equal ' user ', class_user
+    @ldap_setting = LdapSetting.find_by_auth_source_ldap_id(@auth_source.id)
+    assert_equal 'cn', @ldap_setting.groupname
+    assert_equal 'user', @ldap_setting.class_user
+  end
+
   def test_group_filter_should_be_validated
     @ldap_setting.group_search_filter = "(organizationalStatus=1"
     assert !@ldap_setting.valid?

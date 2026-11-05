@@ -363,7 +363,7 @@ module LdapSync::Infectors::AuthSourceLdap
 
       def update_dyngroups_cache!(mem_cache)
         trace do
-          mem_cache.sort_by {|u, m| u}.reduce("   update_dyngroups_cache\n") do |t, (u, m)|
+          mem_cache.sort_by {|u, m| u}.reduce(+"   update_dyngroups_cache\n") do |t, (u, m)|
             t << "      #{u} #{m.join(', ')}\n"
           end
         end
